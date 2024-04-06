@@ -20,6 +20,7 @@ getgenv().NoStaminaLoss = false
 getgenv().HasDoubleJump = false
 getgenv().InfStam = false
 getgenv().NoBlockCD = false
+getgenv().NpcTable = {}
 
 
 --//misc
@@ -36,13 +37,11 @@ end
 workspace.Debris.Loot.ChildAdded:Connect(function(Child)
     if Child.Name == "DeathBag" then
         coroutine.wrap(function()
-            print("corowrapped")
             repeat task.wait() until Child:FindFirstChild("LootTable")
             if (#Child.LootTable:GetChildren()) > 0 then
                 for i,loot in pairs(Child.LootTable:GetChildren()) do
                     local iskey = keycardcheckInstance(loot)
                     if iskey then
-                        print("keycard")
                         local Highlight = Instance.new("Highlight",Child)
                         game:GetService("Debris"):AddItem(Highlight,30)
                     end
@@ -111,38 +110,94 @@ local function getnearestplayer()
     end]]
 end
 
-
-local function compileNpcTable()
-    local PossibleArray = {}
-    
-    for a,b in pairs(workspace.WaveSurvival.NPCs:GetChildren()) do
-        table.insert(PossibleArray,b) 
+--// for loops
+for a,b in pairs(workspace.WaveSurvival.NPCs:GetChildren()) do
+    table.insert(getgenv().NpcTable,b) 
+end
+for f,d in pairs(workspace.Arena:GetChildren()) do
+   if d:FindFirstChild("Humanoid") then
+       table.insert(getgenv().NpcTable,d)
     end
-    for f,d in pairs(workspace.Arena:GetChildren()) do
-       if d:FindFirstChild("Humanoid") then
-           table.insert(PossibleArray,d)
+end
+for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
+    
+    for k,j in pairs(v:GetChildren()) do
+        if j:FindFirstChild("Humanoid") then
+            table.insert(getgenv().NpcTable,j)   
         end
     end
-    for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
-        
-        for k,j in pairs(v:GetChildren()) do
-            if j:FindFirstChild("Humanoid") then
-                table.insert(PossibleArray,j)   
+end
+for i,v in pairs(workspace.NPCs.Hostile:GetChildren()) do
+    table.insert(getgenv().NpcTable,v)
+end
+--// end of for loops
+
+--// child addeds
+workspace.WaveSurvival.NPCs.ChildAdded:Connect(function(Child)
+    getgenv().NpcTable[Child] = Child
+end)
+
+workspace.Arena.ChildAdded:Connect(function(Child)
+    if Child:FindFirstChild("Humanoid") then
+        getgenv().NpcTable[Child] = Child
+     end
+end)
+
+workspace.ActiveTasks.ChildAdded:Connect(function(Child)
+    for k,j in pairs(Child:GetChildren()) do
+        if j:FindFirstChild("Humanoid") then
+            getgenv().NpcTable[j] = j
+        end
+    end
+end)
+
+workspace.NPCs.Hostile.ChildAdded:Connect(function(Child)
+    getgenv().NpcTable[Child] = Child
+end)
+
+--// end of child added
+
+--// child removed
+
+
+workspace.WaveSurvival.NPCs.ChildRemoved:Connect(function(Child)
+    if getgenv().NpcTable[Child] then
+        getgenv().NpcTable[Child] = nil
+    end
+end)
+
+workspace.Arena.ChildRemoved:Connect(function(Child)
+    if Child:FindFirstChild("Humanoid") then
+        if getgenv().NpcTable[Child] then
+            getgenv().NpcTable[Child] = nil
+        end
+     end
+end)
+
+workspace.ActiveTasks.ChildRemoved:Connect(function(Child)
+    for k,j in pairs(Child:GetChildren()) do
+        if j:FindFirstChild("Humanoid") then
+            if getgenv().NpcTable[j] then
+                getgenv().NpcTable[j] = nil
             end
         end
     end
-    for i,v in pairs(workspace.NPCs.Hostile:GetChildren()) do
-        table.insert(PossibleArray,v)
+end)
+
+workspace.NPCs.Hostile.ChildRemoved:Connect(function(Child)
+    if getgenv().NpcTable[Child] then
+        getgenv().NpcTable[Child] = nil
     end
-    return PossibleArray
-end
+end)
+
+--// end of child removed
 
 local function getClosestCharacter()
     local Character = game.Players.LocalPlayer.Character
     if not Character then return end
     local ClosestTarget = nil
     local Distance
-    for i,v in pairs(compileNpcTable()) do
+    for i,v in pairs(getgenv().NpcTable) do
 
         if v == Character then continue end
         if not ClosestTarget then
@@ -162,33 +217,6 @@ end
 
 local function fireAllGuns()
     warn("FIRE-TEST")
-    local NPC_Table = compileNpcTable()
-
-    for i, NPC in pairs(NPC_Table) do
-        if not NPC then return end
-        if not NPC.Humanoid then return end
-        if NPC.Humanoid.Health <= 0 then return end
-        local Head = NPC:WaitForChild("Head")
-        local args = {
-        [1] = Head.Position,
-        [2] = Head:GetPivot(),
-        [3] = 1,
-        [4] = 1,
-        [5] = 9027,
-        [6] = 6964
-        }
-
-        game:GetService("ReplicatedStorage"):WaitForChild("GunStorage"):WaitForChild("Events"):WaitForChild("Shoot"):FireServer(unpack(args))
-
-        for i = 1,9 do
-            local args = {
-                [1] = Head,
-                [2] = 6964
-            }
-
-            game:GetService("ReplicatedStorage"):WaitForChild("GunStorage"):WaitForChild("Events"):WaitForChild("Hit"):FireServer(unpack(args))
-        end
-    end
 end
 
 local OldNameCall
