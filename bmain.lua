@@ -60,7 +60,7 @@ local function checkPlayer(Player)
 		soundy.Playing = true
 		soundy:Play()
         if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.PlayerStatus.Status.Combat.Visible then return end
-       game.Players.LocalPlayer:Kick() 
+       game.Players.LocalPlayer:Kick(Player.Name) 
     end 
 end
 
