@@ -92,7 +92,7 @@ end)
 if getgenv().RSConnection then getgenv().RSConnection:Disconnect() getgenv().RSConnection = nil end
 if getgenv().Heartbeat then getgenv().Heartbeat:Disconnect() getgenv().Heartbeat = nil end
 local function Magnitude(Part1,Part2)
-    if not Part1 or not Part2 then return end
+    if not Part1 or not Part2 then return 0 end
     return (Part1.Position-Part2.Position).Magnitude
 end
 local getnearestdb = {}
@@ -253,25 +253,28 @@ local function getClosestTerminal()
 end
 
 local function getClosestCharacter()
-    local Character = game.Players.LocalPlayer.Character
-    if not Character then return end
-    local ClosestTarget = nil
-    local Distance = 100000000000000
-    for i,v in pairs(getgenv().NpcTable) do
-
-        if v == Character then continue end
-        if not ClosestTarget then
-            ClosestTarget = v
-            Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
-        else
-            if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
-                warn(ClosestTarget,v)
-                ClosestTarget = v
-                Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        local npcTable = getgenv().NpcTable
+        local closestNpc = nil
+        local closestDistance = math.huge
+    
+        if not player or not character then
+            return nil
+        end
+    
+        for npcName, npcData in pairs(npcTable) do
+            local npc = npcData
+            if npc then
+                local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).magnitude
+                if distance < closestDistance then
+                    closestNpc = npc
+                    closestDistance = distance
+                end
             end
         end
-    end
-    return ClosestTarget
+    
+        return closestNpc
 end
 
 
@@ -338,7 +341,7 @@ getgenv().RSConnection = RunService.RenderStepped:Connect(function(dt)
         local Character = game.Players.LocalPlayer.Character
         if not Character:FindFirstChildWhichIsA("RayValue") then return end
         if not Target then return end
-        if not Target.Humanoid then return end
+        if not Target:FindFirstChild("Humanoid") then return end
         if Target.Humanoid.Health <= 0 then return end
         local Head = Target:WaitForChild("Head")
         local args = {
@@ -475,7 +478,7 @@ function()
     local ClosestMerchant = getClosestTerminal()
     print(ClosestMerchant)
     if ClosestMerchant then
-        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot()*CFrame.new(Vector3.new(0,5,0)))
+        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
 end)
 
