@@ -76,6 +76,7 @@ local function checkPlayer(Player)
 		soundy.Volume = 5
 		soundy.Playing = true
 		soundy:Play()
+        game:GetService("Debris"):AddItem(soundy*2)
         if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.PlayerStatus.Status.Combat.Visible then return end
        game.Players.LocalPlayer:Kick(Player.Name) 
     end 
@@ -171,6 +172,20 @@ end)
 
 workspace.NPCs.Hostile.ChildAdded:Connect(function(Child)
     getgenv().NpcTable[Child] = Child
+end)
+
+workspace.Chars.ChildAdded:Connect(function(Child)
+    task.wait(2)
+    if Child:GetAttribute("DoubleJump") == true then
+        --//detect
+        local soundy = Instance.new("Sound", game:GetService("CoreGui"))
+		soundy.SoundId = "rbxassetid://17043176239"
+		soundy.PlaybackSpeed = 1
+		soundy.Volume = 5
+		soundy.Playing = true
+		soundy:Play()
+        game:GetService("Debris"):AddItem(soundy*2)
+    end
 end)
 
 --// end of child added
