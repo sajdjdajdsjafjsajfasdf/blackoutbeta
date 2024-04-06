@@ -16,7 +16,6 @@ getgenv().HookLockpick = false
 getgenv().AntiRagdoll = false
 getgenv().NoSelfDmg = false
 getgenv().InfiniteStamina = false
-getgenv().NoStaminaLoss = false
 getgenv().HasDoubleJump = false
 getgenv().InfStam = false
 getgenv().NoBlockCD = false
@@ -193,10 +192,35 @@ end)
 
 --// end of child removed
 
+local function getClosestMiscNpc(Name: string) --// merchant, or broker
+    local Character = game.Players.LocalPlayer.Character
+    local MiscNpcPath = workspace.NPCs.Other
+    local Closest,Distance
+
+    for i,v in pairs(MiscNpcPath:GetChildren()) do
+
+        if v.Name == Name then
+            print(v.Name)
+            if not Closest then
+                print("no closest")
+                Closest = v
+                Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+            else
+                if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
+                    Closest = v
+                    Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+                    print("ones closer",Distance)
+                end
+            end
+        end
+    end
+    return Closest
+end
+
 local function getClosestCharacter()
     local Character = game.Players.LocalPlayer.Character
     if not Character then return end
-    local ClosestTarget = nil
+    local ClosestTarget
     local Distance
     for i,v in pairs(getgenv().NpcTable) do
 
@@ -207,7 +231,6 @@ local function getClosestCharacter()
             Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
         else
             if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
-                warn(ClosestTarget,v)
                 ClosestTarget = v
                 Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
             end
@@ -216,9 +239,6 @@ local function getClosestCharacter()
     return ClosestTarget
 end
 
-local function fireAllGuns()
-    warn("FIRE-TEST")
-end
 
 local OldNameCall
 
@@ -231,12 +251,17 @@ OldNameCall = hookfunction(getrawmetatable(game).__namecall, function(Self, ...)
             return
         end
         if Self.Name == "Damage" and getgenv().NoSelfDmg then
-            return
+            if Args[1] ~= 1000 then
+                return
+            end
         end
         if Self.Name == "MinigameResult" and getgenv().HookLockpick then
             if not Args[2] then
                 Args[2] = true
             end
+        end
+        if Self.Name == "Stamina" and getgenv().InfiniteStamina then
+            return
         end
     end
 
@@ -308,7 +333,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Blackout GUI [Private]',
+    Title = 'Blackout GUI [Private] | ' .. Players.LocalPlayer.UserId,
     Center = true, 
     AutoShow = true,
 })
@@ -318,48 +343,67 @@ local Tabs = {
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
-local ExperimentalLeftBox = Tabs.Dev:AddLeftGroupbox('Experimental')
+local AuraBox = Tabs.Dev:AddLeftGroupbox('Auras')
+local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
+local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
+local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local MA,GA,AP,AR,AF,IS,NBCD
-MA = ExperimentalLeftBox:AddToggle('MeleeAura', {
+MA = AuraBox:AddToggle('MeleeAura', {
     Text = 'Melee-Aura',
     Default = false,
     Tooltip = 'Melee aura for NPCs [Works only with npcs under "Hostiles"]',
 })
-IS = ExperimentalLeftBox:AddToggle('InfStam', {
+IS = MiscBox:AddToggle('InfStam', {
     Text = 'Infinite-Stamina',
     Default = false,
     Tooltip = "No stamina lost while sprinting",
 })
-NBCD = ExperimentalLeftBox:AddToggle('BlockCD', {
+NBCD = MiscBox:AddToggle('BlockCD', {
     Text = 'Anti-Block Cooldown',
     Default = false,
     Tooltip = "No block cooldown",
 })
-GA = ExperimentalLeftBox:AddToggle('GunAura', {
+GA = AuraBox:AddToggle('GunAura', {
     Text = 'Gun-Aura',
     Default = false,
     Tooltip = 'Gun aura for NPCs [Works only with npcs under "Hostiles"]',
 })
-AP = ExperimentalLeftBox:AddToggle('AutoPick', {
+AP = MiscBox:AddToggle('AutoPick', {
     Text = 'Auto-lockpick',
     Default = false,
     Tooltip = 'Automatically lockpicks containers.',
 })
-AR = ExperimentalLeftBox:AddToggle('AntiRagdoll', {
+AR = MiscBox:AddToggle('AntiRagdoll', {
     Text = 'Anti-Ragdoll',
     Default = false,
     Tooltip = 'Hooks the ragdoll remote event [USEFUL FOR FLYING].',
 })
-AF = ExperimentalLeftBox:AddToggle('AntiFall', {
-    Text = 'No fall damage',
+AF = MiscBox:AddToggle('AntiFall', {
+    Text = 'No environment damage',
     Default = false,
-    Tooltip = 'Removes fall damage while allowing you to reset.',
+    Tooltip = 'Removes fall damage, and other types of self damage\n while allowing you to reset.',
 })
-ExperimentalLeftBox:AddDivider()
 
-ExperimentalLeftBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
-ExperimentalLeftBox:AddButton('Infinite-Yield', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
-ExperimentalLeftBox:AddButton('Gun Farm DOESNT WORK',function() fireAllGuns() end)
+UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
+UniversalBox:AddButton('Infinite-Yield', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
+
+TeleportsBox:AddButton('Teleport to closest broker', 
+function() 
+    local ClosestBroker = getClosestMiscNpc("Broker")
+    print(ClosestBroker)
+    if ClosestBroker then
+        Players.LocalPlayer.Character:PivotTo(ClosestBroker:GetPivot())
+    end
+end)
+TeleportsBox:AddButton('Teleport to closest merchant', 
+function()
+    local ClosestMerchant = getClosestMiscNpc("Merchant")
+    print(ClosestMerchant)
+    if ClosestMerchant then
+        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
+    end
+end)
+
 
 MA:OnChanged(function()
     getgenv().MeleeAura = MA.Value
