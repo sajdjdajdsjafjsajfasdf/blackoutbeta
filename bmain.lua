@@ -75,6 +75,7 @@ end)
 if getgenv().RSConnection then getgenv().RSConnection:Disconnect() getgenv().RSConnection = nil end
 if getgenv().Heartbeat then getgenv().Heartbeat:Disconnect() getgenv().Heartbeat = nil end
 local function Magnitude(Part1,Part2)
+    if not Part1 or not Part2 then return end
     return (Part1.Position-Part2.Position).Magnitude
 end
 local getnearestdb = {}
