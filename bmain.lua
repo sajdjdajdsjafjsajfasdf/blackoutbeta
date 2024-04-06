@@ -256,7 +256,7 @@ local function getClosestCharacter()
     local Character = game.Players.LocalPlayer.Character
     if not Character then return end
     local ClosestTarget = nil
-    local Distance
+    local Distance = 0
     for i,v in pairs(getgenv().NpcTable) do
 
         if v == Character then continue end
