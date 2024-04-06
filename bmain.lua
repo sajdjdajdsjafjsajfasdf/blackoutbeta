@@ -266,6 +266,7 @@ local function getClosestCharacter()
         for npcName, npcData in pairs(npcTable) do
             local npc = npcData
             if npc then
+                if not npc:FindFirstChild("HumanoidRootPart") then continue end
                 local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).magnitude
                 if distance < closestDistance then
                     closestNpc = npc
