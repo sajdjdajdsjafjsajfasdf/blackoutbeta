@@ -20,6 +20,24 @@ getgenv().HasDoubleJump = false
 getgenv().InfStam = false
 getgenv().NoBlockCD = false
 getgenv().NpcTable = {}
+getgenv().VmFX = false
+getgenv().VMMAT = "ForceField"
+getgenv().VMTRANS = 0
+getgenv().VMCP = Color3.new(0,0,0)
+
+workspace.CurrentCamera.ChildAdded:Connect(function(Child)
+    if Child.Name == "ViewModel" and getgenv().VmFX then
+        local Material = Enum.Material[getgenv().VMMAT]
+        if not Material then return end
+        for i, Parts in pairs(Child:GetChildren()) do
+            if Parts:FindFirstChild("SurfaceAppearance") then
+                Parts:FindFirstChild("SurfaceAppearance"):Destroy()
+                Parts.Transparency = getgenv().VMTRANS
+                Parts.Material = Material
+            end
+        end
+    end
+end)
 
 
 --//misc
@@ -366,7 +384,38 @@ local AuraBox = Tabs.Dev:AddLeftGroupbox('Auras')
 local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
-local MA,GA,AP,AR,AF,IS,NBCD
+local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD
+VMTGL = VmBox:AddToggle('VmFX', {
+    Text = 'Apply viewmodel effects',
+    Default = false,
+    Tooltip = 'Toggle for the effects.',
+})
+VMSLD = VmBox:AddSlider('VMTRANSSLID', {
+    Text = 'Viewmodel gun transparency',
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+
+    Compact = false, 
+})
+TXTBOX = VmBox:AddInput('VMBOX', {
+    Default = 'ForceField',
+    Numeric = false,
+    Finished = true,
+
+    Text = 'Material for custom viewmodel.',
+    Tooltip = '',
+
+    Placeholder = '',
+})
+TXTBOX:OnChanged(function()
+    getgenv().VMMAT = TXTBOX.Value
+end)
+VMSLD:OnChanged(function()
+    getgenv().VMTRANS = VMSLD.Value
+end)
 MA = AuraBox:AddToggle('MeleeAura', {
     Text = 'Melee-Aura',
     Default = false,
@@ -431,7 +480,9 @@ function()
     end
 end)
 
-
+VMTGL:OnChanged(function()
+    getgenv().VmFX = VMTGL.Value
+end)
 MA:OnChanged(function()
     getgenv().MeleeAura = MA.Value
 end)
