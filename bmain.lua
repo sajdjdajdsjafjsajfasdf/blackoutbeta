@@ -266,15 +266,15 @@ local function getClosestCharacter()
         for npcName, npcData in pairs(npcTable) do
             local npc = npcData
             if npc then
-                if not npc.PrimaryPart then return end
-                local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).magnitude
+
+                if not npc.PrimaryPart then print("no npc primary part, removing npc") npcTable[npcName] = nil end
+                local distance = (character.PrimaryPart.Position - npc.PrimaryPart.Position).magnitude
                 if distance < closestDistance then
                     closestNpc = npc
                     closestDistance = distance
                 end
             end
         end
-        print(closestNpc)
         return closestNpc
 end
 
