@@ -24,6 +24,15 @@ getgenv().VmFX = false
 getgenv().VMMAT = "ForceField"
 getgenv().VMTRANS = 0
 getgenv().VMCP = Color3.new(0,0,0)
+getgenv().IP = false
+
+game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
+        if Prompt.HoldDuration ~= 0 then
+            Prompt.HoldDuration = 0
+        end
+    end
+end)
 
 workspace.CurrentCamera.ChildAdded:Connect(function(Child)
     if Child.Name == "ViewModel" and getgenv().VmFX then
@@ -403,7 +412,7 @@ local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -438,6 +447,11 @@ MA = AuraBox:AddToggle('MeleeAura', {
     Text = 'Melee-Aura',
     Default = false,
     Tooltip = 'Melee aura for NPCs',
+})
+PPS = MiscBox:AddToggle('InstantPrompt', {
+    Text = 'Instant-Prompt',
+    Default = false,
+    Tooltip = 'Instant proximity prompt use.',
 })
 IS = MiscBox:AddToggle('InfStam', {
     Text = 'Infinite-Stamina',
@@ -500,6 +514,9 @@ end)
 
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
+end)
+PPS:OnChanged(function()
+    getgenv().IP = PPS.Value
 end)
 MA:OnChanged(function()
     getgenv().MeleeAura = MA.Value
