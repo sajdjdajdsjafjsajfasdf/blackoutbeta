@@ -340,6 +340,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     ['Dev'] = Window:AddTab("Experimental"), 
+    ['ESP'] = Window:AddTab("ESP [W.I.P]"), 
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
@@ -351,7 +352,7 @@ local MA,GA,AP,AR,AF,IS,NBCD
 MA = AuraBox:AddToggle('MeleeAura', {
     Text = 'Melee-Aura',
     Default = false,
-    Tooltip = 'Melee aura for NPCs [Works only with npcs under "Hostiles"]',
+    Tooltip = 'Melee aura for NPCs',
 })
 IS = MiscBox:AddToggle('InfStam', {
     Text = 'Infinite-Stamina',
@@ -366,7 +367,7 @@ NBCD = MiscBox:AddToggle('BlockCD', {
 GA = AuraBox:AddToggle('GunAura', {
     Text = 'Gun-Aura',
     Default = false,
-    Tooltip = 'Gun aura for NPCs [Works only with npcs under "Hostiles"]',
+    Tooltip = 'Gun aura for NPCs',
 })
 AP = MiscBox:AddToggle('AutoPick', {
     Text = 'Auto-lockpick',
