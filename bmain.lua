@@ -200,9 +200,7 @@ local function getClosestMiscNpc(Name: string) --// merchant, or broker
     for i,v in pairs(MiscNpcPath:GetChildren()) do
 
         if v.Name == Name then
-            print(v.Name)
             if not Closest then
-                print("no closest")
                 Closest = v
                 Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
             else
@@ -223,7 +221,6 @@ local function getClosestTerminal()
 
     for i,v in pairs(MiscNpcPath:GetChildren()) do
 
-            print(v.Name)
             if not Closest then
                 Closest = v
                 Distance = Magnitude(Character.PrimaryPart,v)
@@ -246,10 +243,12 @@ local function getClosestCharacter()
 
         if v == Character then continue end
         if not ClosestTarget then
+            if Magnitude(Character.PrimaryPart,v.PrimaryPart) > 15 then continue end
             ClosestTarget = v
             Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
         else
             if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
+                warn(ClosestTarget,v)
                 ClosestTarget = v
                 Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
             end
