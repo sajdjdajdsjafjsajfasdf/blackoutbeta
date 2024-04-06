@@ -223,7 +223,6 @@ local function getClosestTerminal()
 
     for i,v in pairs(MiscNpcPath:GetChildren()) do
 
-        if v.Name == Name then
             print(v.Name)
             if not Closest then
                 Closest = v
@@ -234,7 +233,6 @@ local function getClosestTerminal()
                     Distance = Magnitude(Character.PrimaryPart,v)
                 end
             end
-        end
     end
     return Closest
 end
@@ -463,6 +461,7 @@ Library.KeybindFrame.Visible = false;
 
 Library:OnUnload(function()
     Library.Unloaded = true
+    getgenv().aliveloaded = false
 end)
 
 -- UI Settings
