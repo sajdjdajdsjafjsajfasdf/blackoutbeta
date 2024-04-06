@@ -261,7 +261,6 @@ local function getClosestCharacter()
 
         if v == Character then continue end
         if not ClosestTarget then
-            if Magnitude(Character.PrimaryPart,v.PrimaryPart) > 15 then continue end
             ClosestTarget = v
             Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
         else
