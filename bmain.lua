@@ -475,7 +475,7 @@ function()
     local ClosestMerchant = getClosestTerminal()
     print(ClosestMerchant)
     if ClosestMerchant then
-        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
+        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot()*CFrame.new(Vector3.new(0,5,0)))
     end
 end)
 
