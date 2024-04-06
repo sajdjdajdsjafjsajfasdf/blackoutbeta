@@ -209,7 +209,29 @@ local function getClosestMiscNpc(Name: string) --// merchant, or broker
                 if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
                     Closest = v
                     Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
-                    print("ones closer",Distance)
+                end
+            end
+        end
+    end
+    return Closest
+end
+
+local function getClosestTerminal()
+    local Character = game.Players.LocalPlayer.Character
+    local MiscNpcPath = workspace.Terminals
+    local Closest,Distance
+
+    for i,v in pairs(MiscNpcPath:GetChildren()) do
+
+        if v.Name == Name then
+            print(v.Name)
+            if not Closest then
+                Closest = v
+                Distance = Magnitude(Character.PrimaryPart,v)
+            else
+                if Magnitude(Character.PrimaryPart,v)<Distance then
+                    Closest = v
+                    Distance = Magnitude(Character.PrimaryPart,v)
                 end
             end
         end
@@ -399,6 +421,14 @@ end)
 TeleportsBox:AddButton('Teleport to closest merchant', 
 function()
     local ClosestMerchant = getClosestMiscNpc("Merchant")
+    print(ClosestMerchant)
+    if ClosestMerchant then
+        Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
+    end
+end)
+TeleportsBox:AddButton('Teleport to closest terminal', 
+function()
+    local ClosestMerchant = getClosestTerminal()
     print(ClosestMerchant)
     if ClosestMerchant then
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
