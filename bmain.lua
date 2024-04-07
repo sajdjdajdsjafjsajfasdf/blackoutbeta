@@ -27,7 +27,7 @@ getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
         if Prompt.HoldDuration ~= 0 then
             Prompt.HoldDuration = 0
         end
@@ -103,6 +103,7 @@ if getgenv().RSConnection then getgenv().RSConnection:Disconnect() getgenv().RSC
 if getgenv().Heartbeat then getgenv().Heartbeat:Disconnect() getgenv().Heartbeat = nil end
 local function Magnitude(Part1,Part2)
     if not Part1 or not Part2 then return 0 end
+    if not Part1:IsA("BasePart") or not Part2:IsA("BasePart") then return 0 end
     return (Part1.Position-Part2.Position).Magnitude
 end
 local getnearestdb = {}
@@ -288,24 +289,23 @@ local function getClosestTerminal()
     return Closest
 end
 
-local function getClosestCharacter()
+local function getClosestNPC()
     local Character = game.Players.LocalPlayer.Character
-    local MiscNpcPath = getgenv().NpcTable
-    local Closest,Distance  
+    local ClosestNPC = nil
+    local MaxDistance = 15
 
-    for i,v in pairs(MiscNpcPath) do
-
-            if not Closest then
-                Closest = v
-                Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
-            else
-                if Magnitude(Character.PrimaryPart,v,PrimaryPart)<Distance then
-                    Closest = v
-                    Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
-                end
-            end
+    for i, NPC in pairs(getgenv().NpcTable) do
+        if not NPC.PrimaryPart then continue end
+        local Mag = Magnitude(NPC.PrimaryPart,Character.PrimaryPart)
+        if not ClosestNPC and Mag < MaxDistance then
+            MaxDistance = Mag
+            ClosestNPC = NPC
+        elseif ClosestNPC and Mag < MaxDistance then
+            MaxDistance = Mag
+            ClosestNPC = NPC
+        end
     end
-    return Closest
+    return ClosestNPC
 end
 
 
@@ -354,7 +354,7 @@ getgenv().RSConnection = RunService.RenderStepped:Connect(function(dt)
         Character:SetAttribute("BlockingCooldown",false)
     end
     if getgenv().MeleeAura then
-        local Target = getClosestCharacter()
+        local Target = getClosestNPC()
         if not Character:FindFirstChildWhichIsA("RayValue") then return end
         if not Target then return end
         if not Target.Humanoid then return end
@@ -368,7 +368,7 @@ getgenv().RSConnection = RunService.RenderStepped:Connect(function(dt)
 
         game:GetService("ReplicatedStorage"):WaitForChild("MeleeStorage"):WaitForChild("Events"):WaitForChild("Hit"):FireServer(unpack(args))
     elseif getgenv().GunAura then
-        local Target = getClosestCharacter()
+        local Target = getClosestNPC()
         local Character = game.Players.LocalPlayer.Character
         if not Character:FindFirstChildWhichIsA("RayValue") then return end
         if not Target then return end
