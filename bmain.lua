@@ -27,7 +27,7 @@ getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
         if Prompt.HoldDuration ~= 0 then
             Prompt.HoldDuration = 0
         end
@@ -202,7 +202,7 @@ workspace.Chars.ChildAdded:Connect(function(Child)
 		soundy.Volume = 5
 		soundy.Playing = true
 		soundy:Play()
-        game:GetService("Debris"):AddItem(soundy.TimeLength*2)
+        game:GetService("Debris"):AddItem(soundy,soundy.TimeLength)
     end
 end)
 
