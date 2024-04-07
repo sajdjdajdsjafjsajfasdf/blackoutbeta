@@ -174,6 +174,7 @@ workspace.Arena.ChildAdded:Connect(function(Child)
 end)
 
 workspace.ActiveTasks.ChildAdded:Connect(function(Child)
+    task.wait(1)
     for k,j in pairs(Child:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             getgenv().NpcTable[j] = j
