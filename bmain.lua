@@ -141,10 +141,12 @@ end
 --// for loops
 for a,b in pairs(workspace.WaveSurvival.NPCs:GetChildren()) do
     table.insert(getgenv().NpcTable,b) 
+    print(b.Name)
 end
 for f,d in pairs(workspace.Arena:GetChildren()) do
    if d:FindFirstChild("Humanoid") then
        table.insert(getgenv().NpcTable,d)
+       print(d.Name)
     end
 end
 for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
@@ -152,35 +154,41 @@ for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
     for k,j in pairs(v:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             table.insert(getgenv().NpcTable,j)   
+            print(j.Name)
         end
     end
 end
 for i,v in pairs(workspace.NPCs.Hostile:GetChildren()) do
     table.insert(getgenv().NpcTable,v)
+    print(v.Name)
 end
 --// end of for loops
 
 --// child addeds
 workspace.WaveSurvival.NPCs.ChildAdded:Connect(function(Child)
     getgenv().NpcTable[Child] = Child
+    print(Child.Name)
 end)
 
 workspace.Arena.ChildAdded:Connect(function(Child)
     if Child:FindFirstChild("Humanoid") then
         getgenv().NpcTable[Child] = Child
-     end
+        print(Child.Name)
+    end
 end)
 
 workspace.ActiveTasks.ChildAdded:Connect(function(Child)
     for k,j in pairs(Child:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             getgenv().NpcTable[j] = j
+            print(j.Name)
         end
     end
 end)
 
 workspace.NPCs.Hostile.ChildAdded:Connect(function(Child)
     getgenv().NpcTable[Child] = Child
+    print(Child.Name)
 end)
 
 workspace.Chars.ChildAdded:Connect(function(Child)
@@ -193,7 +201,7 @@ workspace.Chars.ChildAdded:Connect(function(Child)
 		soundy.Volume = 5
 		soundy.Playing = true
 		soundy:Play()
-        game:GetService("Debris"):AddItem(soundy*2)
+        game:GetService("Debris"):AddItem(soundy.TimeLength*2)
     end
 end)
 
@@ -204,6 +212,7 @@ end)
 
 workspace.WaveSurvival.NPCs.ChildRemoved:Connect(function(Child)
     if getgenv().NpcTable[Child] then
+        warn(Child.Name)
         getgenv().NpcTable[Child] = nil
     end
 end)
@@ -211,6 +220,7 @@ end)
 workspace.Arena.ChildRemoved:Connect(function(Child)
     if Child:FindFirstChild("Humanoid") then
         if getgenv().NpcTable[Child] then
+            warn(Child.Name)
             getgenv().NpcTable[Child] = nil
         end
      end
@@ -220,6 +230,7 @@ workspace.ActiveTasks.ChildRemoved:Connect(function(Child)
     for k,j in pairs(Child:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             if getgenv().NpcTable[j] then
+                warn(j.Name)
                 getgenv().NpcTable[j] = nil
             end
         end
@@ -228,6 +239,7 @@ end)
 
 workspace.NPCs.Hostile.ChildRemoved:Connect(function(Child)
     if getgenv().NpcTable[Child] then
+        warn(Child.Name)
         getgenv().NpcTable[Child] = nil
     end
 end)
@@ -277,29 +289,23 @@ local function getClosestTerminal()
 end
 
 local function getClosestCharacter()
-        local player = game.Players.LocalPlayer
-        local character = player.Character
-        local npcTable = getgenv().NpcTable
-        local closestNpc = nil
-        local closestDistance = math.huge
-    
-        if not player or not character then
-            return nil
-        end
-    
-        for npcName, npcData in pairs(npcTable) do
-            local npc = npcData
-            if npc then
+    local Character = game.Players.LocalPlayer.Character
+    local MiscNpcPath = getgenv().NpcTable
+    local Closest,Distance  
 
-                if not npc.PrimaryPart then print("no npc primary part, removing npc") npcTable[npcName] = nil end
-                local distance = (character.PrimaryPart.Position - npc.PrimaryPart.Position).magnitude
-                if distance < closestDistance then
-                    closestNpc = npc
-                    closestDistance = distance
+    for i,v in pairs(MiscNpcPath) do
+
+            if not Closest then
+                Closest = v
+                Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+            else
+                if Magnitude(Character.PrimaryPart,v,PrimaryPart)<Distance then
+                    Closest = v
+                    Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
                 end
             end
-        end
-        return closestNpc
+    end
+    return Closest
 end
 
 
