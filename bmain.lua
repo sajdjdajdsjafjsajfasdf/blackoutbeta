@@ -25,9 +25,10 @@ getgenv().VMMAT = "ForceField"
 getgenv().VMTRANS = 0
 getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
+getgenv().AutofarmMedic = false
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
         if Prompt.HoldDuration ~= 0 then
             Prompt.HoldDuration = 0
         end
@@ -142,12 +143,10 @@ end
 --// for loops
 for a,b in pairs(workspace.WaveSurvival.NPCs:GetChildren()) do
     table.insert(getgenv().NpcTable,b) 
-    print(b.Name)
 end
 for f,d in pairs(workspace.Arena:GetChildren()) do
    if d:FindFirstChild("Humanoid") then
        table.insert(getgenv().NpcTable,d)
-       print(d.Name)
     end
 end
 for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
@@ -155,26 +154,22 @@ for _,v in pairs(workspace.ActiveTasks:GetChildren()) do
     for k,j in pairs(v:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             table.insert(getgenv().NpcTable,j)   
-            print(j.Name)
         end
     end
 end
 for i,v in pairs(workspace.NPCs.Hostile:GetChildren()) do
     table.insert(getgenv().NpcTable,v)
-    print(v.Name)
 end
 --// end of for loops
 
 --// child addeds
 workspace.WaveSurvival.NPCs.ChildAdded:Connect(function(Child)
     getgenv().NpcTable[Child] = Child
-    print(Child.Name)
 end)
 
 workspace.Arena.ChildAdded:Connect(function(Child)
     if Child:FindFirstChild("Humanoid") then
         getgenv().NpcTable[Child] = Child
-        print(Child.Name)
     end
 end)
 
@@ -182,14 +177,12 @@ workspace.ActiveTasks.ChildAdded:Connect(function(Child)
     for k,j in pairs(Child:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             getgenv().NpcTable[j] = j
-            print(j.Name)
         end
     end
 end)
 
 workspace.NPCs.Hostile.ChildAdded:Connect(function(Child)
     getgenv().NpcTable[Child] = Child
-    print(Child.Name)
 end)
 
 workspace.Chars.ChildAdded:Connect(function(Child)
@@ -213,7 +206,6 @@ end)
 
 workspace.WaveSurvival.NPCs.ChildRemoved:Connect(function(Child)
     if getgenv().NpcTable[Child] then
-        warn(Child.Name)
         getgenv().NpcTable[Child] = nil
     end
 end)
@@ -221,7 +213,6 @@ end)
 workspace.Arena.ChildRemoved:Connect(function(Child)
     if Child:FindFirstChild("Humanoid") then
         if getgenv().NpcTable[Child] then
-            warn(Child.Name)
             getgenv().NpcTable[Child] = nil
         end
      end
@@ -231,7 +222,6 @@ workspace.ActiveTasks.ChildRemoved:Connect(function(Child)
     for k,j in pairs(Child:GetChildren()) do
         if j:FindFirstChild("Humanoid") then
             if getgenv().NpcTable[j] then
-                warn(j.Name)
                 getgenv().NpcTable[j] = nil
             end
         end
@@ -240,12 +230,76 @@ end)
 
 workspace.NPCs.Hostile.ChildRemoved:Connect(function(Child)
     if getgenv().NpcTable[Child] then
-        warn(Child.Name)
         getgenv().NpcTable[Child] = nil
     end
 end)
 
 --// end of child removed
+local function getclosestbrokerfarm() --// merchant, or broker
+    local Character = game.Players.LocalPlayer.Character
+    local MiscNpcPath = workspace.NPCs.Other
+    local Closest,Distance
+
+    for i,v in pairs(MiscNpcPath:GetChildren()) do
+
+        if v.Name == "Broker" then
+            if not Closest then
+                Closest = v
+                Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+            else
+                if Magnitude(Character.PrimaryPart,v.PrimaryPart)<Distance then
+                    Closest = v
+                    Distance = Magnitude(Character.PrimaryPart,v.PrimaryPart)
+                end
+            end
+        end
+    end
+    return Closest
+end
+
+local function fireGetTask(Broker: Model)
+    local args = {
+        [1] = Broker:WaitForChild("HumanoidRootPart"),
+        [2] = "MedicalAid"
+    }
+    
+    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Stations"):WaitForChild("StartTask"):FireServer(unpack(args))    
+end
+
+workspace.ActiveTasks.ChildAdded:Connect(function(Child)
+    if not getgenv().AutofarmMedic then return end
+
+    local Pivot = game.Players.LocalPlayer.Character:GetPivot()
+
+    task.wait(1)
+    if not Child:FindFirstChild("Civilian") then return end
+    local Civ = Child:FindFirstChild("Civilian")
+
+    if Civ:GetAttribute("TargetPlayer") == game.Players.LocalPlayer.Name then
+        print("yes.")
+        game.Players.LocalPlayer.Character:PivotTo(Civ:GetPivot()*CFrame.new(0,0,0))
+        task.wait(1)
+        local PP = Civ.HumanoidRootPart:WaitForChild("TalkWithNPC")
+        fireproximityprompt(PP)
+        task.wait(.5)
+        local args = {
+            [1] = "1: Rebels sent me, here to deliver some medical supplies."
+        } 
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Dialogue"):WaitForChild("Event"):FireServer(unpack(args))
+        local args = {
+            [1] = "1: Glad I could help."
+        }
+        
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Dialogue"):WaitForChild("Event"):FireServer(unpack(args))
+        task.wait(.5)
+        game.Players.LocalPlayer.Character:PivotTo(Pivot)
+        task.wait(.2)
+        local broker = getclosestbrokerfarm()
+        Instance.new("Highlight",broker)
+        fireGetTask(broker)
+    end
+end)
+
 
 local function getClosestMiscNpc(Name: string) --// merchant, or broker
     local Character = game.Players.LocalPlayer.Character
@@ -418,7 +472,8 @@ local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS
+local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -490,6 +545,12 @@ AF = MiscBox:AddToggle('AntiFall', {
     Tooltip = 'Removes fall damage, and other types of self damage\n while allowing you to reset.',
 })
 
+AFM = AFarmBox:AddToggle('AUTOMEDIC', {
+    Text = 'Auto-farm',
+    Default = false,
+    Tooltip = 'Automatically farms broker quests.',
+})
+
 UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
 UniversalBox:AddButton('Infinite-Yield', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
 
@@ -545,6 +606,10 @@ end)
 AF:OnChanged(function()
     getgenv().NoSelfDmg = AF.Value
 end)
+AFM:OnChanged(function()
+    getgenv().AutofarmMedic = AFM.Value
+end)
+
 
 Library:SetWatermarkVisibility(false)
 Library.KeybindFrame.Visible = false;
