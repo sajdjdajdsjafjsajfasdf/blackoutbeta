@@ -36,7 +36,7 @@ local MerchantHighlights = {}
 local NiggaHighlights = {}
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().InstantPrompt then
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
         if Prompt.HoldDuration ~= 0 then
             Prompt.HoldDuration = 0
         end
