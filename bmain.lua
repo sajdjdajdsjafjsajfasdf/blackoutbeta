@@ -589,7 +589,7 @@ local Tabs = {
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
-local AuraBox = Tabs.Dev:AddLeftGroupbox('Auras')
+local AuraBox = Tabs.Dev:AddLeftGroupbox('NPC-Auras')
 local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
