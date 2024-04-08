@@ -26,15 +26,25 @@ getgenv().VMTRANS = 0
 getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
 getgenv().AutofarmMedic = false
+getgenv().NOREC = false
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().InstantPrompt then
         if Prompt.HoldDuration ~= 0 then
             Prompt.HoldDuration = 0
         end
     end
 end)
-
+local function applyNoRecoil(Viewmodel: Model)
+    for i, data in pairs(getgc(true)) do
+        if typeof(data) == "table" and rawget(data, "Shell") then
+            data.Kickback = 0
+            data.AimedKickback = 0
+            data.Recoil = NumberRange.new(0,1)
+            data.Spread = 0
+        end
+    end
+end
 workspace.CurrentCamera.ChildAdded:Connect(function(Child)
     if Child.Name == "ViewModel" and getgenv().VmFX then
         local Material = Enum.Material[getgenv().VMMAT]
@@ -46,6 +56,8 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                 Parts.Material = Material
             end
         end
+    elseif Child.Name == "ViewModel" and getgenv().NOREC then
+        applyNoRecoil()
     end
 end)
 
@@ -236,6 +248,7 @@ workspace.NPCs.Hostile.ChildRemoved:Connect(function(Child)
 end)
 
 --// end of child removed
+
 local function getclosestbrokerfarm() --// merchant, or broker
     local Character = game.Players.LocalPlayer.Character
     local MiscNpcPath = workspace.NPCs.Other
@@ -278,7 +291,7 @@ workspace.ActiveTasks.ChildAdded:Connect(function(Child)
 
     if Civ:GetAttribute("TargetPlayer") == game.Players.LocalPlayer.Name then
         print("yes.")
-        game.Players.LocalPlayer.Character:PivotTo(Civ:GetPivot()*CFrame.new(0,0,0))
+        game.Players.LocalPlayer.Character:PivotTo(Civ:GetPivot()*CFrame.new(0,-4.8,0))
         task.wait(1)
         local PP = Civ.HumanoidRootPart:WaitForChild("TalkWithNPC")
         fireproximityprompt(PP)
@@ -474,11 +487,16 @@ local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
     Tooltip = 'Toggle for the effects.',
+})
+NORECOI = VmBox:AddToggle('NORECOIL', {
+    Text = 'No recoil',
+    Default = false,
+    Tooltip = 'What the fuck do you think it does',
 })
 VMSLD = VmBox:AddSlider('VMTRANSSLID', {
     Text = 'Viewmodel gun transparency',
@@ -582,6 +600,9 @@ end)
 
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
+end)
+NORECOI:OnChanged(function()
+    getgenv().NOREC = NORECOI.Value
 end)
 PPS:OnChanged(function()
     getgenv().IP = PPS.Value
