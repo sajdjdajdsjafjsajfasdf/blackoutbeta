@@ -27,6 +27,13 @@ getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
 getgenv().AutofarmMedic = false
 getgenv().NOREC = false
+getgenv().PESP = false
+getgenv().BESP = false
+getgenv().MESP = false
+
+local BrokerHighlights = {}
+local MerchantHighlights = {}
+local NiggaHighlights = {}
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
     if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().InstantPrompt then
@@ -35,6 +42,60 @@ game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
         end
     end
 end)
+
+local function encodeNumber(number)
+    local alphabet = {
+        [0] = "z", [1] = "a", [2] = "b", [3] = "c", [4] = "d", [5] = "e",
+        [6] = "f", [7] = "g", [8] = "h", [9] = "i"
+    }
+    return alphabet[number]
+end
+
+local function encodeNumberString(str)
+    local encodedStr = ""
+    for i = 1, #str do
+        local number = tonumber(str:sub(i, i))
+        if number ~= nil and number >= 0 and number <= 9 then
+            local encodedLetter = encodeNumber(number)
+            encodedStr = encodedStr .. encodedLetter
+        else
+            encodedStr = encodedStr .. str:sub(i, i)
+        end
+    end
+    return encodedStr
+end
+
+local function encodeAlphabet(letter)
+    local alphabet = {
+        a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10,
+        k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17, r = 18, s = 19,
+        t = 20, u = 21, v = 22, w = 23, x = 24, y = 25, z = 26
+    }
+    return alphabet[letter:lower()]
+end
+
+local function encodeAlphabetString(str)
+    local encodedStr = ""
+    for i = 1, #str do
+        local letter = str:sub(i, i)
+        local encodedNumber = encodeAlphabet(letter)
+        if encodedNumber then
+            encodedStr = encodedStr .. encodedNumber
+        else
+            encodedStr = encodedStr .. letter
+        end
+    end
+    return encodedStr
+end
+
+local function encodeString(string,encodetype)
+    if encodetype == "s2n" then
+        local encodedString = encodeAlphabetString(string)
+    elseif encodetype == "n2s" then
+        local encodedString = encodeNumberString(string)
+    end
+end
+
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
         if typeof(data) == "table" and rawget(data, "Shell") then
@@ -42,6 +103,7 @@ local function applyNoRecoil(Viewmodel: Model)
             data.AimedKickback = 0
             data.Recoil = NumberRange.new(0,1)
             data.Spread = 0
+            data.Shake = 0
         end
     end
 end
@@ -63,6 +125,52 @@ end)
 
 
 --//misc
+
+for _, miscNpc in pairs(workspace.NPCs.Other:GetChildren()) do
+    local Highlight = Instance.new("Highlight")
+    Highlight.FillTransparency = 1
+    Highlight.Parent = miscNpc
+    Highlight.Enabled = false
+    if miscNpc.Name == "Broker" then
+        Highlight.Enabled = getgenv().BESP
+        Highlight.OutlineColor = Color3.fromRGB(0,0,255)
+        BrokerHighlights[Highlight] = Highlight
+    else
+        Highlight.OutlineColor = Color3.fromRGB(0,255,0)
+        Highlight.Enabled = getgenv().MESP
+        MerchantHighlights[Highlight] = Highlight
+    end
+end
+
+workspace.NPCs.Other.ChildAdded:Connect(function(miscNpc)
+    local Highlight = Instance.new("Highlight")
+    Highlight.FillTransparency = 1
+    Highlight.Parent = miscNpc
+    Highlight.Enabled = false
+    if miscNpc.Name == "Broker" then
+        Highlight.OutlineColor = Color3.fromRGB(0,255,0)
+        Highlight.Enabled = getgenv().BESP
+        BrokerHighlights[Highlight] = Highlight
+    else
+        Highlight.OutlineColor = Color3.fromRGB(0,255,0)
+        Highlight.Enabled = getgenv().MESP
+        MerchantHighlights[Highlight] = Highlight
+    end
+end)
+workspace.NPCs.Other.ChildRemoved:Connect(function(miscNpc)
+    if miscNpc:FindFirstChildWhichIsA("Highlight") then
+        if string.match(miscNpc.Name,"Merchant") then
+            local hl = MerchantHighlights[miscNpc:FindFirstChildWhichIsA("Highlight")]
+            hl:Destroy()
+            hl = nil
+        else
+            local hl = BrokerHighlights[miscNpc:FindFirstChildWhichIsA("Highlight")]
+            hl:Destroy()
+            hl = nil
+        end
+    end
+end)
+
 local directory = workspace.Debris.Loot
 local function keycardcheckInstance(Instance)
     local name = Instance.name:lower()
@@ -487,7 +595,8 @@ local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI
+local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -516,6 +625,21 @@ TXTBOX = VmBox:AddInput('VMBOX', {
     Tooltip = '',
 
     Placeholder = '',
+})
+ESPBUTTON = ESPBox:AddToggle('BrokESP', {
+    Text = 'Broker-ESP',
+    Default = false,
+    Tooltip = 'Broker ESP',
+})
+MERCESP = ESPBox:AddToggle('CockESP', {
+    Text = 'Merchant-ESP',
+    Default = false,
+    Tooltip = 'Merchant ESP',
+})
+PLAYERESP = ESPBox:AddToggle('PESP', {
+    Text = 'Player-ESP',
+    Default = false,
+    Tooltip = 'Player ESP',
 })
 TXTBOX:OnChanged(function()
     getgenv().VMMAT = TXTBOX.Value
@@ -630,6 +754,19 @@ AF:OnChanged(function()
 end)
 AFM:OnChanged(function()
     getgenv().AutofarmMedic = AFM.Value
+end)
+ESPBUTTON:OnChanged(function()
+    getgenv().BESP = ESPBUTTON.Value
+    for i, highlight in pairs(BrokerHighlights) do
+        highlight.Enabled = ESPBUTTON.Value
+    end
+end)
+
+MERCESP:OnChanged(function()
+    getgenv().MESP = MERCESP.Value
+    for i, highlight in pairs(MerchantHighlights) do
+        highlight.Enabled = MERCESP.Value
+    end
 end)
 
 
