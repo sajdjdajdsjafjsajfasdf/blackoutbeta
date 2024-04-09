@@ -1,7 +1,3 @@
-if game.PlaceId ~= 15432890326 then return end
-if getgenv().aliveloaded then return end
-getgenv().aliveloaded = true
-
 --//services
 
 local RunService = game:GetService("RunService")
@@ -44,59 +40,6 @@ game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
     end
 end)
 
-local function encodeNumber(number)
-    local alphabet = {
-        [0] = "z", [1] = "a", [2] = "b", [3] = "c", [4] = "d", [5] = "e",
-        [6] = "f", [7] = "g", [8] = "h", [9] = "i"
-    }
-    return alphabet[number]
-end
-
-local function encodeNumberString(str)
-    local encodedStr = ""
-    for i = 1, #str do
-        local number = tonumber(str:sub(i, i))
-        if number ~= nil and number >= 0 and number <= 9 then
-            local encodedLetter = encodeNumber(number)
-            encodedStr = encodedStr .. encodedLetter
-        else
-            encodedStr = encodedStr .. str:sub(i, i)
-        end
-    end
-    return encodedStr
-end
-
-local function encodeAlphabet(letter)
-    local alphabet = {
-        a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10,
-        k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17, r = 18, s = 19,
-        t = 20, u = 21, v = 22, w = 23, x = 24, y = 25, z = 26
-    }
-    return alphabet[letter:lower()]
-end
-
-local function encodeAlphabetString(str)
-    local encodedStr = ""
-    for i = 1, #str do
-        local letter = str:sub(i, i)
-        local encodedNumber = encodeAlphabet(letter)
-        if encodedNumber then
-            encodedStr = encodedStr .. encodedNumber
-        else
-            encodedStr = encodedStr .. letter
-        end
-    end
-    return encodedStr
-end
-
-local function encodeString(string,encodetype)
-    if encodetype == "s2n" then
-        local encodedString = encodeAlphabetString(string)
-    elseif encodetype == "n2s" then
-        local encodedString = encodeNumberString(string)
-    end
-end
-
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
         if typeof(data) == "table" and rawget(data, "Shell") then
@@ -122,8 +65,9 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                 Parts.Transparency = getgenv().VMTRANS
                 Parts.Material = Material
             end
+		end
+			applyNoRecoil()
         end
-    applyNoRecoil()
 end)
 
 
