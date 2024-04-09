@@ -26,6 +26,7 @@ getgenv().VMTRANS = 0
 getgenv().VMCP = Color3.new(0,0,0)
 getgenv().IP = false
 getgenv().AutofarmMedic = false
+getgenv().NOSPR = false
 getgenv().NOREC = false
 getgenv().PESP = false
 getgenv().BESP = false
@@ -99,11 +100,15 @@ end
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
         if typeof(data) == "table" and rawget(data, "Shell") then
-            data.Kickback = 0
-            data.AimedKickback = 0
-            data.Recoil = NumberRange.new(0,1)
-            data.Spread = 0
-            data.Shake = 0
+            if getgenv().NOREC then
+		data.Kickback = 0
+            	data.AimedKickback = 0
+            	data.Recoil = NumberRange.new(0,1)
+		data.Shake = 0
+	    end
+            if getgenv().NOSPR then
+		data.Spread = 0
+	    end
         end
     end
 end
@@ -118,9 +123,7 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                 Parts.Material = Material
             end
         end
-    elseif Child.Name == "ViewModel" and getgenv().NOREC then
-        applyNoRecoil()
-    end
+    applyNoRecoil()
 end)
 
 
@@ -596,7 +599,7 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -604,6 +607,11 @@ VMTGL = VmBox:AddToggle('VmFX', {
 })
 NORECOI = VmBox:AddToggle('NORECOIL', {
     Text = 'No recoil',
+    Default = false,
+    Tooltip = 'What the fuck do you think it does',
+})
+NOSPREAD = VmBox:AddToggle('NOSPREED', {
+    Text = 'No spread.',
     Default = false,
     Tooltip = 'What the fuck do you think it does',
 })
@@ -727,6 +735,9 @@ VMTGL:OnChanged(function()
 end)
 NORECOI:OnChanged(function()
     getgenv().NOREC = NORECOI.Value
+end)
+NOSPREAD:OnChanged(function()
+    getgenv().NOSPR = NOSPREAD.Value
 end)
 PPS:OnChanged(function()
     getgenv().IP = PPS.Value
