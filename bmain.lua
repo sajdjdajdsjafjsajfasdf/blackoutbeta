@@ -1,3 +1,5 @@
+if getgenv().aliveloaded then return end
+getgenv().aliveloaded = true
 --//services
 
 local RunService = game:GetService("RunService")
@@ -44,30 +46,32 @@ local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
         if typeof(data) == "table" and rawget(data, "Shell") then
             if getgenv().NOREC then
-		data.Kickback = 0
+		        data.Kickback = 0
             	data.AimedKickback = 0
             	data.Recoil = NumberRange.new(0,1)
-		data.Shake = 0
-	    end
+		        data.Shake = 0
+	        end
             if getgenv().NOSPR then
-		data.Spread = 0
-	    end
+		        data.Spread = 0
+	        end
         end
     end
 end
 workspace.CurrentCamera.ChildAdded:Connect(function(Child)
-    if Child.Name == "ViewModel" and getgenv().VmFX then
-        local Material = Enum.Material[getgenv().VMMAT]
-        if not Material then return end
-        for i, Parts in pairs(Child:GetChildren()) do
-            if Parts:FindFirstChild("SurfaceAppearance") then
-                Parts:FindFirstChild("SurfaceAppearance"):Destroy()
-                Parts.Transparency = getgenv().VMTRANS
-                Parts.Material = Material
+    if Child.Name == "ViewModel" then
+        if getgenv().VmFX then
+            local Material = Enum.Material[getgenv().VMMAT]
+            if not Material then return end
+            for i, Parts in pairs(Child:GetChildren()) do
+                if Parts:FindFirstChild("SurfaceAppearance") then
+                    Parts:FindFirstChild("SurfaceAppearance"):Destroy()
+                    Parts.Transparency = getgenv().VMTRANS
+                    Parts.Material = Material
+                end
             end
-		end
-			applyNoRecoil()
         end
+        applyNoRecoil()
+    end
 end)
 
 
@@ -345,7 +349,6 @@ workspace.ActiveTasks.ChildAdded:Connect(function(Child)
     local Civ = Child:FindFirstChild("Civilian")
 
     if Civ:GetAttribute("TargetPlayer") == game.Players.LocalPlayer.Name then
-        print("yes.")
         game.Players.LocalPlayer.Character:PivotTo(Civ:GetPivot()*CFrame.new(0,-4.8,0))
         task.wait(1)
         local PP = Civ.HumanoidRootPart:WaitForChild("TalkWithNPC")
@@ -364,7 +367,6 @@ workspace.ActiveTasks.ChildAdded:Connect(function(Child)
         game.Players.LocalPlayer.Character:PivotTo(Pivot)
         task.wait(.2)
         local broker = getclosestbrokerfarm()
-        Instance.new("Highlight",broker)
         fireGetTask(broker)
     end
 end)
@@ -652,7 +654,6 @@ UniversalBox:AddButton('Infinite-Yield', function() loadstring(game:HttpGet('htt
 TeleportsBox:AddButton('Teleport to closest broker', 
 function() 
     local ClosestBroker = getClosestMiscNpc("Broker")
-    print(ClosestBroker)
     if ClosestBroker then
         Players.LocalPlayer.Character:PivotTo(ClosestBroker:GetPivot())
     end
@@ -660,7 +661,6 @@ end)
 TeleportsBox:AddButton('Teleport to closest merchant', 
 function()
     local ClosestMerchant = getClosestMiscNpc("Merchant")
-    print(ClosestMerchant)
     if ClosestMerchant then
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
@@ -668,7 +668,6 @@ end)
 TeleportsBox:AddButton('Teleport to closest terminal', 
 function()
     local ClosestMerchant = getClosestTerminal()
-    print(ClosestMerchant)
     if ClosestMerchant then
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
