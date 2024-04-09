@@ -5,7 +5,7 @@ getgenv().aliveloaded = true
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("StarterGui")
-if not Players.LocalPlayer.Character then repeat task.wait() until Players.LocalPlayer.Character
+
 --//envs
 
 getgenv().MeleeAura = false
