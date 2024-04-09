@@ -5,7 +5,7 @@ getgenv().aliveloaded = true
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("StarterGui")
-
+if not Players.LocalPlayer.Character then repeat task.wait() until Players.LocalPlayer.Character
 --//envs
 
 getgenv().MeleeAura = false
@@ -30,9 +30,15 @@ getgenv().PESP = false
 getgenv().BESP = false
 getgenv().MESP = false
 
+local FlashConnection
+
 local BrokerHighlights = {}
 local MerchantHighlights = {}
 local NiggaHighlights = {}
+
+for i, connection in pairs(getconnections(game.ReplicatedStorage:WaitForChild("Events"):WaitForChild("Player"):WaitForChild("Flashbang").OnClientEvent)) do
+    FlashConnection = connection
+end
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
     if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
@@ -545,7 +551,7 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -615,6 +621,11 @@ IS = MiscBox:AddToggle('InfStam', {
     Text = 'Infinite-Stamina',
     Default = false,
     Tooltip = "No stamina lost while sprinting",
+})
+NOFLAS = MiscBox:AddToggle('NOFLASH', {
+    Text = 'Anti-Flash',
+    Default = false,
+    Tooltip = "No flash effect.",
 })
 NBCD = MiscBox:AddToggle('BlockCD', {
     Text = 'Anti-Block Cooldown',
@@ -713,6 +724,13 @@ ESPBUTTON:OnChanged(function()
     getgenv().BESP = ESPBUTTON.Value
     for i, highlight in pairs(BrokerHighlights) do
         highlight.Enabled = ESPBUTTON.Value
+    end
+end)
+NOFLAS:OnChanged(function()
+    if NOFLAS.Value then
+        FlashConnection:Disable()
+    else
+        FlashConnection:Enable()
     end
 end)
 
