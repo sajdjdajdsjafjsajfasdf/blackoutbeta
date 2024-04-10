@@ -146,8 +146,9 @@ workspace.Debris.Loot.ChildAdded:Connect(function(Child)
                 for i,loot in pairs(Child.LootTable:GetChildren()) do
                     local iskey = keycardcheckInstance(loot)
                     if iskey then
-                        local Highlight = Instance.new("Highlight",Child)
-                        game:GetService("Debris"):AddItem(Highlight,30)
+                        if getgenv().linolib then
+			    getgenv().linolib:Notify("Item dropped: " .. loot.Name)
+			end
                     end
                 end
             end
@@ -529,6 +530,7 @@ end)
 --// ui lib
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+getgenv().linolib = Library
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
