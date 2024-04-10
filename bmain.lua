@@ -152,6 +152,7 @@ workspace.Debris.Loot.ChildAdded:Connect(function(Child)
                     if iskey then
                         if getgenv().linolib then
                             getgenv().linolib:Notify("Item dropped: " .. loot.Name)
+			end
                     end
                 end
             end
