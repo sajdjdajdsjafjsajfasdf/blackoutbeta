@@ -47,7 +47,11 @@ game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
         end
     end
 end)
-
+local function Magnitude(Part1,Part2)
+    if not Part1 or not Part2 then return 0 end
+    if not Part1:IsA("BasePart") or not Part2:IsA("BasePart") then return 0 end
+    return (Part1.Position-Part2.Position).Magnitude
+end
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
         if typeof(data) == "table" and rawget(data, "Shell") then
@@ -181,11 +185,6 @@ end)
 
 if getgenv().RSConnection then getgenv().RSConnection:Disconnect() getgenv().RSConnection = nil end
 if getgenv().Heartbeat then getgenv().Heartbeat:Disconnect() getgenv().Heartbeat = nil end
-local function Magnitude(Part1,Part2)
-    if not Part1 or not Part2 then return 0 end
-    if not Part1:IsA("BasePart") or not Part2:IsA("BasePart") then return 0 end
-    return (Part1.Position-Part2.Position).Magnitude
-end
 local getnearestdb = {}
 local function getnearestplayer()
     --[[local Characters = workspace.Chars
