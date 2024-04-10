@@ -76,7 +76,7 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                 end
             end
         end
-        applyNoRecoil()
+        if getgenv().NOSPR or getgenv().NOREC then applyNoRecoil() end
     end
 end)
 
