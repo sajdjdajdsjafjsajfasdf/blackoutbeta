@@ -147,8 +147,9 @@ workspace.Debris.Loot.ChildAdded:Connect(function(Child)
                     local iskey = keycardcheckInstance(loot)
                     if iskey then
                         if getgenv().linolib then
-			    getgenv().linolib:Notify("Item dropped: " .. loot.Name)
-			end
+                            local distance = Magnitude(Child,game.Players.LocalPlayer.Character.PrimaryPart) or "NO CHARACTER"
+			                getgenv().linolib:Notify("Item dropped: " .. loot.Name .. tostring(distance))
+			            end
                     end
                 end
             end
