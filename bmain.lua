@@ -131,7 +131,7 @@ end)
 local directory = workspace.Debris.Loot
 local function keycardcheckInstance(Instance)
     local name = Instance.name:lower()
-    if string.match(name,"keycard") and not string.match(name,"purple") then
+    if string.match(name,"keycard") or string.match(name,"operator") then -- and not string.match(name,"purple")
         return true
     else
         return false
