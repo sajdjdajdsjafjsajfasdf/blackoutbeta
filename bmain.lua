@@ -29,6 +29,52 @@ getgenv().NOREC = false
 getgenv().PESP = false
 getgenv().BESP = false
 getgenv().MESP = false
+local function encodeNumber(number)
+    local alphabet = {
+        [0] = "z", [1] = "a", [2] = "b", [3] = "c", [4] = "d", [5] = "e",
+        [6] = "f", [7] = "g", [8] = "h", [9] = "i"
+    }
+    return alphabet[number]
+end
+local ClassNameBlacklist = {"Shirt","Pants","BodyColors","Accessory"}
+
+local function encodeNumberString(str)
+    local encodedStr = ""
+    for i = 1, #str do
+        local number = tonumber(str:sub(i, i))
+        if number ~= nil and number >= 0 and number <= 9 then
+            local encodedLetter = encodeNumber(number)
+            encodedStr = encodedStr .. encodedLetter
+        else
+            encodedStr = encodedStr .. str:sub(i, i)
+        end
+    end
+    return encodedStr
+end
+
+local function encodeCharacter(char)
+    local alphabet = {
+        ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5,
+        ["f"] = 6, ["g"] = 7, ["h"] = 8, ["i"] = 9, ["j"] = 10,
+        ["k"] = 11, ["l"] = 12, ["m"] = 13, ["n"] = 14, ["o"] = 15,
+        ["p"] = 16, ["q"] = 17, ["r"] = 18, ["s"] = 19, ["t"] = 20,
+        ["u"] = 21, ["v"] = 22, ["w"] = 23, ["x"] = 24, ["y"] = 25,
+        ["z"] = 26,
+        ["0"] = 27, ["1"] = 28, ["2"] = 29, ["3"] = 30, ["4"] = 31,
+        ["5"] = 32, ["6"] = 33, ["7"] = 34, ["8"] = 35, ["9"] = 36
+    }
+    return alphabet[char] or 0 
+end
+
+local function encodeString(str)
+    local encodedNumber = 0
+    for i = 1, #str do
+        local char = str:sub(i, i):lower()
+        local charValue = encodeCharacter(char)
+        encodedNumber = encodedNumber * 100 + charValue
+    end
+    return encodedNumber
+end
 
 local FlashConnection
 
@@ -39,6 +85,105 @@ local NiggaHighlights = {}
 for i, connection in pairs(getconnections(game.ReplicatedStorage:WaitForChild("Events"):WaitForChild("Player"):WaitForChild("Flashbang").OnClientEvent)) do
     FlashConnection = connection
 end
+
+local StaticUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui
+local LBUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui.RightTab.Leaderboard
+local PlayerList = LBUI.PlayerList
+
+local PlayerListConnections = {}
+
+local adjectives = {"blazing","radiant","fading","vivid"}
+local nouns = {"hawk","marauder","tempest","veil","valley"}
+
+
+local function generatePhrase()
+    local adjective = adjectives[math.random(#adjectives)]
+    local noun = nouns[math.random(#nouns)]
+    return adjective .. " " .. noun
+end
+--[[if getgenv().streamermode then return end
+    getgenv().streamermode = true
+    game:GetService("ReplicatedStorage"):SetAttribute("ServerStartTime",tick())
+    game:GetService("ReplicatedStorage"):SetAttribute("ServerName",generatePhrase():upper())
+    local function spoofLevel()
+        local LevelLabel = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.LevelBox.LevelText
+        local XPBar = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.XpBar.XpText
+        
+        local Experience = string.split(XPBar.Text,"/")
+        local CurrentExp = Experience[1]
+        local MaxExp = Experience[2]
+        encoded = encodeNumberString(LevelLabel.Text)
+        LevelLabel.Text = encoded
+        LevelLabel:GetPropertyChangedSignal("Text"):Connect(function()
+            LevelLabel.Text = encodeNumberString(LevelLabel.Text)
+        end)
+        local CurExp = encodeNumberString(CurrentExp)
+        local MaxExper = encodeNumberString(MaxExp)
+        XPBar.Text = CurExp.."/"..MaxExper
+        XPBar:GetPropertyChangedSignal("Text"):Connect(function()
+            local Experience1 = string.split(XPBar.Text,"/")
+            local CurrentExp1 = Experience1[1]
+            local MaxExp1 = Experience1[2]
+            local CurExpr = encodeNumberString(CurrentExp1)
+            local MaxExperr = encodeNumberString(MaxExp1)
+            XPBar.Text = CurExpr.."/"..MaxExperr
+        end)
+    end
+    spoofLevel()]]
+
+local function createNewConnection(TextLabel)
+    if getgenv().streamermode then
+        if TextLabel:IsA("TextButton") then
+            PlayerListConnections[TextLabel] = {}
+            local lc,dc,uc
+            TextLabel.DisplayName.Text = encodeString(TextLabel.Username.Text)
+            TextLabel.Username.Text = encodeString(TextLabel.Username.Text)
+            TextLabel.Level.Text = encodeNumberString(tostring(TextLabel.Level.Text))
+    
+            lc = TextLabel.Level:GetPropertyChangedSignal("Text"):Connect(function()
+                TextLabel.Level.Text = encodeNumberString(tostring(TextLabel.Level.Text))   
+            end)
+            dc = TextLabel.DisplayName:GetPropertyChangedSignal("Text"):Connect(function()
+                TextLabel.DisplayName.Text = encodeString(TextLabel.Username.Text)    
+            end) 
+            uc = TextLabel.Username:GetPropertyChangedSignal("Text"):Connect(function()
+                TextLabel.Username.Text = encodeString(TextLabel.Username.Text)   
+            end) 
+            table.insert(PlayerListConnections[TextLabel],lc)
+            table.insert(PlayerListConnections[TextLabel],dc)
+            table.insert(PlayerListConnections[TextLabel],uc)
+        end
+    end
+end
+    
+PlayerList.ChildAdded:Connect(function(Child)
+    createNewConnection(Child)
+end)
+
+PlayerList.ChildRemoved:Connect(function(Child)
+    if getgenv().streamermode then
+        local Connections = PlayerListConnections[Child]
+        if not Connections then return end
+        for i, Cnct in pairs(Connections) do
+            Cnct:Disconnect()
+        end
+        PlayerListConnections[Child] = nil
+    end
+end)
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+    if getgenv().streamermode then
+        repeat task.wait() until char:FindFirstChildWhichIsA("Accessory")
+        for i, Child in pairs(char:GetChildren()) do
+            if table.find(ClassNameBlacklist,Child.ClassName) then
+                Child:Destroy()
+            end
+        end
+        task.wait(1)
+        char:WaitForChild("Head"):WaitForChild("face"):Destroy()
+        Instance.new("BodyColors",game.Players.LocalPlayer.Character)
+    end
+end)
+
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
     if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
@@ -553,7 +698,7 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -654,6 +799,11 @@ AF = MiscBox:AddToggle('AntiFall', {
     Default = false,
     Tooltip = 'Removes fall damage, and other types of self damage\n while allowing you to reset.',
 })
+SMMODE = MiscBox:AddToggle('StreamerMode', {
+    Text = 'Streamer-mode',
+    Default = false,
+    Tooltip = 'Hides info.',
+})
 
 AFM = AFarmBox:AddToggle('AUTOMEDIC', {
     Text = 'Auto-farm',
@@ -662,7 +812,7 @@ AFM = AFarmBox:AddToggle('AUTOMEDIC', {
 })
 
 UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
-UniversalBox:AddButton('Infinite-Yield', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
+UniversalBox:AddButton('IY', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
 
 TeleportsBox:AddButton('Teleport to closest broker', 
 function() 
@@ -685,7 +835,55 @@ function()
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
 end)
+SMMODE:OnChanged(function()
+    if SMMODE.Value == true then
+        getgenv().streamermode = SMMODE.Value
+        if game.Players.LocalPlayer.Character then
 
+            for i, Player in pairs(PlayerList:GetChildren()) do --// iterate through player lists to get the textbutton
+                createNewConnection(Player)
+            end
+
+            for i, Child in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+                if table.find(ClassNameBlacklist,Child.ClassName) then
+                    Child:Destroy()
+                end
+            end
+            task.wait(1)
+            game.Players.LocalPlayer.Character:WaitForChild("Head"):WaitForChild("face"):Destroy()
+            Instance.new("BodyColors",game.Players.LocalPlayer.Character)
+        end
+    else
+        --// here we disconnect the connections.. get it ? 
+        print("disconnecting")
+        for i, Connection in pairs(PlayerListConnections) do
+            if typeof(Connection) == "table" then
+                for _,v in pairs(Connection) do --// must assume this is a connection
+                    v:Disconnect()
+                    Connection[_] = nil
+                end
+            end
+            Connection = nil
+        end
+        print("looping through players")
+        for _,TextButton in pairs(PlayerList:GetChildren()) do
+            if TextButton:IsA("TextButton") then
+                local Player = game.Players[TextButton.Name]
+
+                if Player then
+                    local DisplayName = Player.DisplayName
+                    local Name = Player.Name
+                    local Level = Player:GetAttribute("Level")
+                    TextButton.Username.Text = Name
+                    TextButton.DisplayName.Text = DisplayName
+                    TextButton.Level.Text = Level                    
+                end
+            end
+        end
+    end
+
+
+end)
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
 end)
