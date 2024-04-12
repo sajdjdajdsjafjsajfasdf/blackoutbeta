@@ -148,7 +148,16 @@ end
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
     if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
         if Prompt.HoldDuration ~= 0 then
+	    Prompt:SetAttribute("Original",Prompt.HoldDuration)
             Prompt.HoldDuration = 0
+        end
+    end
+end)
+game:GetService("ProximityPromptService").PromptHidden:Connect(function(Prompt)
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
+        if Prompt.HoldDuration == 0 then
+	    if not Prompt:GetAttribute("Original") then return end
+            Prompt.HoldDuration = Prompt:GetAttribute("Original")
         end
     end
 end)
