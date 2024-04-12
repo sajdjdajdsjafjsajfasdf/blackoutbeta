@@ -92,8 +92,8 @@ local PlayerList = LBUI.PlayerList
 
 local PlayerListConnections = {}
 
-local adjectives = {"blazing","radiant","fading","vivid"}
-local nouns = {"hawk","marauder","tempest","veil","valley"}
+local adjectives = {"blazing","radiant","fading","vivid","silent","lunar"}
+local nouns = {"hawk","marauder","tempest","veil","valley","lighthouse"}
 
 
 local function generatePhrase()
@@ -101,88 +101,48 @@ local function generatePhrase()
     local noun = nouns[math.random(#nouns)]
     return adjective .. " " .. noun
 end
---[[if getgenv().streamermode then return end
-    getgenv().streamermode = true
-    game:GetService("ReplicatedStorage"):SetAttribute("ServerStartTime",tick())
-    game:GetService("ReplicatedStorage"):SetAttribute("ServerName",generatePhrase():upper())
-    local function spoofLevel()
-        local LevelLabel = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.LevelBox.LevelText
-        local XPBar = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.XpBar.XpText
-        
-        local Experience = string.split(XPBar.Text,"/")
-        local CurrentExp = Experience[1]
-        local MaxExp = Experience[2]
-        encoded = encodeNumberString(LevelLabel.Text)
-        LevelLabel.Text = encoded
-        LevelLabel:GetPropertyChangedSignal("Text"):Connect(function()
-            LevelLabel.Text = encodeNumberString(LevelLabel.Text)
-        end)
-        local CurExp = encodeNumberString(CurrentExp)
-        local MaxExper = encodeNumberString(MaxExp)
-        XPBar.Text = CurExp.."/"..MaxExper
-        XPBar:GetPropertyChangedSignal("Text"):Connect(function()
-            local Experience1 = string.split(XPBar.Text,"/")
-            local CurrentExp1 = Experience1[1]
-            local MaxExp1 = Experience1[2]
-            local CurExpr = encodeNumberString(CurrentExp1)
-            local MaxExperr = encodeNumberString(MaxExp1)
-            XPBar.Text = CurExpr.."/"..MaxExperr
-        end)
-    end
-    spoofLevel()]]
 
-local function createNewConnection(TextLabel)
-    if getgenv().streamermode then
-        if TextLabel:IsA("TextButton") then
-            PlayerListConnections[TextLabel] = {}
-            local lc,dc,uc
-            TextLabel.DisplayName.Text = encodeString(TextLabel.Username.Text)
-            TextLabel.Username.Text = encodeString(TextLabel.Username.Text)
-            TextLabel.Level.Text = encodeNumberString(tostring(TextLabel.Level.Text))
-    
-            lc = TextLabel.Level:GetPropertyChangedSignal("Text"):Connect(function()
-                TextLabel.Level.Text = encodeNumberString(tostring(TextLabel.Level.Text))   
-            end)
-            dc = TextLabel.DisplayName:GetPropertyChangedSignal("Text"):Connect(function()
-                TextLabel.DisplayName.Text = encodeString(TextLabel.Username.Text)    
-            end) 
-            uc = TextLabel.Username:GetPropertyChangedSignal("Text"):Connect(function()
-                TextLabel.Username.Text = encodeString(TextLabel.Username.Text)   
-            end) 
-            table.insert(PlayerListConnections[TextLabel],lc)
-            table.insert(PlayerListConnections[TextLabel],dc)
-            table.insert(PlayerListConnections[TextLabel],uc)
-        end
+local function spoofServerInfo(bool)
+    if bool then
+        getgenv().originalServerInfo = {}
+        originalServerInfo["ST"] = game:GetService("ReplicatedStorage"):GetAttribute("ServerStartTime")
+        originalServerInfo["SN"] = game:GetService("ReplicatedStorage"):GetAttribute("ServerName")
+        game:GetService("ReplicatedStorage"):SetAttribute("ServerStartTime",tick()+math.random(10000,100000))
+        game:GetService("ReplicatedStorage"):SetAttribute("ServerName",generatePhrase():upper())
+    else
+        if not originalServerInfo then return end
+        game:GetService("ReplicatedStorage"):SetAttribute("ServerStartTime",originalServerInfo["ST"])
+        game:GetService("ReplicatedStorage"):SetAttribute("ServerName",originalServerInfo["SN"])
     end
 end
-    
-PlayerList.ChildAdded:Connect(function(Child)
-    createNewConnection(Child)
-end)
 
-PlayerList.ChildRemoved:Connect(function(Child)
-    if getgenv().streamermode then
-        local Connections = PlayerListConnections[Child]
-        if not Connections then return end
-        for i, Cnct in pairs(Connections) do
-            Cnct:Disconnect()
-        end
-        PlayerListConnections[Child] = nil
-    end
-end)
-game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
-    if getgenv().streamermode then
-        repeat task.wait() until char:FindFirstChildWhichIsA("Accessory")
-        for i, Child in pairs(char:GetChildren()) do
-            if table.find(ClassNameBlacklist,Child.ClassName) then
-                Child:Destroy()
-            end
-        end
-        task.wait(1)
-        char:WaitForChild("Head"):WaitForChild("face"):Destroy()
-        Instance.new("BodyColors",game.Players.LocalPlayer.Character)
-    end
-end)
+
+local function spoofLevel()
+    local LevelLabel = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.LevelBox.LevelText
+    local XPBar = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.XpBar.XpText
+    if LevelLabel:GetAttribute("SMMODE") == true then return end
+    LevelLabel:SetAttribute("SMMODE",true)
+    local Experience = string.split(XPBar.Text,"/")
+    local CurrentExp = Experience[1]
+    local MaxExp = Experience[2]
+    encoded = tostring(math.random(10,45))
+    LevelLabel.Text = encoded
+    LevelLabel:GetPropertyChangedSignal("Text"):Connect(function()
+        LevelLabel.Text = encodeNumberString(LevelLabel.Text)
+    end)
+    local CurExp = encodeNumberString(CurrentExp)
+    local MaxExper = encodeNumberString(MaxExp)
+    XPBar.Text = CurExp.."/"..MaxExper
+    XPBar:GetPropertyChangedSignal("Text"):Connect(function()
+        local Experience1 = string.split(XPBar.Text,"/")
+        local CurrentExp1 = Experience1[1]
+        local MaxExp1 = Experience1[2]
+        local CurExpr = encodeNumberString(CurrentExp1)
+        local MaxExperr = encodeNumberString(MaxExp1)
+        XPBar.Text = CurExpr.."/"..MaxExperr
+    end)
+end
+
 
 
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
@@ -199,7 +159,7 @@ local function Magnitude(Part1,Part2)
 end
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
-        if typeof(data) == "table" and rawget(data, "Shell") then
+        if typeof(data) == "table" and rawget(data, "Shell") or rawget(data, "Projectile") then
             if getgenv().NOREC then
 		        data.Kickback = 0
             	data.AimedKickback = 0
@@ -229,7 +189,11 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
     end
 end)
 
-
+game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(Child)
+    if Child.Name == "MainGui" and getgenv().streamermode then
+        spoofLevel()
+    end
+end)
 --//misc
 
 for _, miscNpc in pairs(workspace.NPCs.Other:GetChildren()) do
@@ -675,7 +639,8 @@ end)
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 getgenv().linolib = Library
-Library:Notify("nigga")
+Library:Notify("Loading...")
+local loadtick = tick()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
@@ -836,50 +801,13 @@ function()
     end
 end)
 SMMODE:OnChanged(function()
+    getgenv().streamermode = SMMODE.Value
+    spoofServerInfo(SMMODE.Value)
     if SMMODE.Value == true then
-        getgenv().streamermode = SMMODE.Value
-        if game.Players.LocalPlayer.Character then
-
-            for i, Player in pairs(PlayerList:GetChildren()) do --// iterate through player lists to get the textbutton
-                createNewConnection(Player)
-            end
-
-            for i, Child in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
-                if table.find(ClassNameBlacklist,Child.ClassName) then
-                    Child:Destroy()
-                end
-            end
-            task.wait(1)
-            game.Players.LocalPlayer.Character:WaitForChild("Head"):WaitForChild("face"):Destroy()
-            Instance.new("BodyColors",game.Players.LocalPlayer.Character)
-        end
+        spoofLevel()
     else
         --// here we disconnect the connections.. get it ? 
-        print("disconnecting")
-        for i, Connection in pairs(PlayerListConnections) do
-            if typeof(Connection) == "table" then
-                for _,v in pairs(Connection) do --// must assume this is a connection
-                    v:Disconnect()
-                    Connection[_] = nil
-                end
-            end
-            Connection = nil
-        end
-        print("looping through players")
-        for _,TextButton in pairs(PlayerList:GetChildren()) do
-            if TextButton:IsA("TextButton") then
-                local Player = game.Players[TextButton.Name]
-
-                if Player then
-                    local DisplayName = Player.DisplayName
-                    local Name = Player.Name
-                    local Level = Player:GetAttribute("Level")
-                    TextButton.Username.Text = Name
-                    TextButton.DisplayName.Text = DisplayName
-                    TextButton.Level.Text = Level                    
-                end
-            end
-        end
+        
     end
 
 
@@ -964,3 +892,5 @@ ThemeManager:SetFolder('MyScriptHub')
 SaveManager:SetFolder('MyScriptHub/specific-game')
 SaveManager:BuildConfigSection(Tabs['UI Settings']) 
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+Library:Notify("Loaded! Took: " .. tostring(tick()-loadtick))
