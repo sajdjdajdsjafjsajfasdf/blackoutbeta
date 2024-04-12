@@ -159,7 +159,7 @@ local function Magnitude(Part1,Part2)
 end
 local function applyNoRecoil(Viewmodel: Model)
     for i, data in pairs(getgc(true)) do
-        if typeof(data) == "table" and rawget(data, "Shell") or rawget(data, "Projectile") then
+        if typeof(data) == "table" and (rawget(data, "Shell") or rawget(data, "Projectile")) then
             if getgenv().NOREC then
 		        data.Kickback = 0
             	data.AimedKickback = 0
