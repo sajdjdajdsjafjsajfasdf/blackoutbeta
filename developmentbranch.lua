@@ -1,9 +1,3 @@
---[[
-
-All changes are made here to be tested before being set to bmain.lua
-
-]]
-
 
 --//services
 
@@ -137,14 +131,21 @@ local NiggaHighlights = {}
         Text.Color = Color3.fromRGB(255,255,255)
         Text.Visible = false
         Text.Center = true
+        local TextWeapon = Drawing.new("Text")
+        TextWeapon.Text = ""
+        TextWeapon.Size = 12.5
+        TextWeapon.Color = Color3.fromRGB(255,255,255)
+        TextWeapon.Visible = false
+        TextWeapon.Center = true
 
         table.insert(Data["DRAWINGINSTANCES"],BoxEsp)
         table.insert(Data["DRAWINGINSTANCES"],Text)
+        table.insert(Data["DRAWINGINSTANCES"],TextWeapon)
 
         local RunServiceConnection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
         
             if Plr.Character then
-                
+                if not Plr.Character:FindFirstChild("Humanoid") then return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -158,24 +159,36 @@ local NiggaHighlights = {}
                         BoxEsp.Size = Vector2.new(500/RootPos.Z,HeadPos.Y-LegPos.Y) --// math , math and math! credits to 0x83
                         BoxEsp.Position = Vector2.new(RootPos.X-BoxEsp.Size.X/2,RootPos.Y-BoxEsp.Size.Y/2)
                         BoxEsp.Visible = true
+                        Text.Text = Plr.Name .. " | " .. tostring(Plr.Character:FindFirstChild("Humanoid").Health).. "/"..Plr.Character:FindFirstChild("Humanoid").MaxHealth
                         Text.Position = Vector2.new(HeadPos.X,RootPos.Y-20) --// note to self: vector2 is measured in PIXELS, adding 0.5 pixels won't change much
                                                                             --// UPDATE TO NOTE: why the fuck do i have to subtract to increase y?
                         Text.Visible = true                                 --// reference for later: vectorToWorldSpace(self._cameraCFrame, vector3New(...)),
+                        if Plr.Character:FindFirstChildWhichIsA("RayValue") then
+                            --// something equipped
+                            TextWeapon.Text = "[".. Plr.Character:FindFirstChildWhichIsA("RayValue").Name .. "]"
+                            TextWeapon.Visible = true
+                            TextWeapon.Position = Vector2.new(HeadPos.X,RootPos.Y+20)
+                        else
+                            if TextWeapon.Visible then
+                                TextWeapon.Visible = false
+                            end
+                        end
                     else
 
                         BoxEsp.Visible = false
                         Text.Visible = false
-
+                        TextWeapon.Visible = false
                     end
                 else
                     Text.Visible = false
                     BoxEsp.Visible = false
+                    TextWeapon.Visible = false
                 end
             else
 
                 Text.Visible = false
                 BoxEsp.Visible = false
-
+                TextWeapon.Visible = false
             end
         end)
 
@@ -772,7 +785,8 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     ['Dev'] = Window:AddTab("Experimental"), 
-    ['ESP'] = Window:AddTab("ESP [W.I.P]"), 
+    ['ESP'] = Window:AddTab("ESP"), 
+    ['SPOOF'] = Window:AddTab("Spoofer"),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
@@ -910,11 +924,7 @@ AF = MiscBox:AddToggle('AntiFall', {
     Default = false,
     Tooltip = 'Removes fall damage, and other types of self damage\n while allowing you to reset.',
 })
-SMMODE = MiscBox:AddToggle('StreamerMode', {
-    Text = 'Streamer-mode',
-    Default = false,
-    Tooltip = 'Hides info.',
-})
+
 
 AFM = AFarmBox:AddToggle('AUTOMEDIC', {
     Text = 'Auto-farm',
@@ -946,18 +956,45 @@ function()
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
 end)
-SMMODE:OnChanged(function()
-    getgenv().streamermode = SMMODE.Value
-    spoofServerInfo(SMMODE.Value)
-    if SMMODE.Value == true then
-        spoofLevel()
-    else
-        --// here we disconnect the connections.. get it ? 
-        
+
+--// procedural attribute changer
+local Directories = {game.ReplicatedStorage,game.Players.LocalPlayer.PlayerGui}
+for _,Directory in pairs(Directories) do
+    local UISpoofBox = Tabs.SPOOF:AddLeftGroupbox(Directory.Name)
+    for i, Attribute in pairs(Directory:GetAttributes()) do
+        if typeof(Attribute) == "number" then
+            local NewButton = UISpoofBox:AddInput(tostring(i), {
+                Default = Attribute,
+                Numeric = true,
+                Finished = true,
+            
+                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Tooltip = '',
+            
+                Placeholder = '',
+            })
+            NewButton:OnChanged(function()
+                Directory:SetAttribute(i,tonumber(NewButton.Value))
+            end)
+        elseif typeof(Attribute) == "string" then
+            local NewButton = UISpoofBox:AddInput(tostring(i), {
+                Default = Attribute,
+                Numeric = false,
+                Finished = true,
+            
+                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Tooltip = '',
+            
+                Placeholder = '',
+            })
+            NewButton:OnChanged(function()
+                Directory:SetAttribute(i,tostring(NewButton.Value))
+            end)
+        end
     end
+    
+end
 
-
-end)
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
 end)
