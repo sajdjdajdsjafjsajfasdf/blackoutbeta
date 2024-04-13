@@ -13,6 +13,7 @@ if not Player.Character then return end
 
 if getgenv().aliveloaded then return end
 getgenv().aliveloaded = true
+local loadtick = tick()
 
 
 --//envs
@@ -145,7 +146,9 @@ local NiggaHighlights = {}
         local RunServiceConnection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
         
             if Plr.Character then
-                if not Plr.Character:FindFirstChild("Humanoid") then return end
+                if not Plr.Character:FindFirstChild("Humanoid") then BoxEsp.Visible = false return end
+                if not Plr.Character:WaitForChild("Head") then BoxEsp.Visible = false return end
+                if not Plr.Character:WaitForChild("HumanoidRootPart") then BoxEsp.Visible = false return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -782,7 +785,6 @@ local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 getgenv().linolib = Library
 Library:Notify("Loading...")
-local loadtick = tick()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
