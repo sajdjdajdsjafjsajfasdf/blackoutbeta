@@ -798,7 +798,6 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local UISpoofBox = Tabs.SPOOF:AddLeftGroupbox('UI')
 local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
@@ -925,11 +924,7 @@ AF = MiscBox:AddToggle('AntiFall', {
     Default = false,
     Tooltip = 'Removes fall damage, and other types of self damage\n while allowing you to reset.',
 })
-SMMODE = MiscBox:AddToggle('StreamerMode', {
-    Text = 'Streamer-mode',
-    Default = false,
-    Tooltip = 'Hides info.',
-})
+
 
 AFM = AFarmBox:AddToggle('AUTOMEDIC', {
     Text = 'Auto-farm',
@@ -961,38 +956,44 @@ function()
         Players.LocalPlayer.Character:PivotTo(ClosestMerchant:GetPivot())
     end
 end)
-SMMODE:OnChanged(function()
-    getgenv().streamermode = SMMODE.Value
-    spoofServerInfo(SMMODE.Value)
-    if SMMODE.Value == true then
-        spoofLevel()
-    else
-        --// here we disconnect the connections.. get it ? 
-        
-    end
-
-
-end)
 
 --// procedural attribute changer
-for i, Attribute in pairs(game:GetService("Players").LocalPlayer.PlayerGui:GetAttributes()) do
-    if typeof(Attribute) ~= "boolean" then
-        local NewButton = UISpoofBox:AddInput(tostring(i), {
-            Default = Attribute,
-            Numeric = true,
-            Finished = true,
-        
-            Text = tostring(i),
-            Tooltip = '',
-        
-            Placeholder = '',
-        })
-        NewButton:OnChanged(function()
-            game.Players.LocalPlayer.PlayerGui:SetAttribute(i,tonumber(NewButton.Value))
-        end)
+local Directories = {game.ReplicatedStorage,game.Players.LocalPlayer.PlayerGui}
+for _,Directory in pairs(Directories) do
+    local UISpoofBox = Tabs.SPOOF:AddLeftGroupbox(Directory.Name)
+    for i, Attribute in pairs(Directory:GetAttributes()) do
+        if typeof(Attribute) == "number" then
+            local NewButton = UISpoofBox:AddInput(tostring(i), {
+                Default = Attribute,
+                Numeric = true,
+                Finished = true,
+            
+                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Tooltip = '',
+            
+                Placeholder = '',
+            })
+            NewButton:OnChanged(function()
+                Directory:SetAttribute(i,tonumber(NewButton.Value))
+            end)
+        elseif typeof(Attribute) == "string" then
+            local NewButton = UISpoofBox:AddInput(tostring(i), {
+                Default = Attribute,
+                Numeric = false,
+                Finished = true,
+            
+                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Tooltip = '',
+            
+                Placeholder = '',
+            })
+            NewButton:OnChanged(function()
+                Directory:SetAttribute(i,tostring(NewButton.Value))
+            end)
+        end
     end
+    
 end
-
 
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
