@@ -668,11 +668,12 @@ local Tabs = {
 local AuraBox = Tabs.Dev:AddLeftGroupbox('NPC-Auras')
 local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
+local AutoBox = Tabs.Dev:AddLeftGroupbox('Automation')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -707,6 +708,28 @@ TXTBOX = VmBox:AddInput('VMBOX', {
 
     Placeholder = '',
 })
+AutoBox:AddButton('Broker quick start', function()
+    if getgenv().AUTOMISSION then
+        local ClosestBroker = getClosestMiscNpc("Broker")
+
+        local args = {
+            [1] = ClosestBroker:WaitForChild("HumanoidRootPart"),
+            [2] = tostring(getgenv().AUTOMISSION)
+        }
+        
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Stations"):WaitForChild("StartTask"):FireServer(unpack(args))
+    end
+end)
+AUBOX = AutoBox:AddInput('VMBOX', {
+    Default = 'StealCargo',
+    Numeric = false,
+    Finished = true,
+
+    Text = 'Mission to start',
+    Tooltip = '',
+
+    Placeholder = '',
+})
 ESPBUTTON = ESPBox:AddToggle('BrokESP', {
     Text = 'Broker-ESP',
     Default = false,
@@ -724,6 +747,9 @@ PLAYERESP = ESPBox:AddToggle('PESP', {
 })
 TXTBOX:OnChanged(function()
     getgenv().VMMAT = TXTBOX.Value
+end)
+AUBOX:OnChanged(function()
+    getgenv().AUTOMISSION = AUBOX.Value
 end)
 VMSLD:OnChanged(function()
     getgenv().VMTRANS = VMSLD.Value
