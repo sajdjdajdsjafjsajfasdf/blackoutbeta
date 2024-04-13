@@ -131,14 +131,21 @@ local NiggaHighlights = {}
         Text.Color = Color3.fromRGB(255,255,255)
         Text.Visible = false
         Text.Center = true
+        local TextWeapon = Drawing.new("Text")
+        TextWeapon.Text = ""
+        TextWeapon.Size = 12.5
+        TextWeapon.Color = Color3.fromRGB(255,255,255)
+        TextWeapon.Visible = false
+        TextWeapon.Center = true
 
         table.insert(Data["DRAWINGINSTANCES"],BoxEsp)
         table.insert(Data["DRAWINGINSTANCES"],Text)
+        table.insert(Data["DRAWINGINSTANCES"],TextWeapon)
 
         local RunServiceConnection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
         
             if Plr.Character then
-                
+                if not Plr.Character:FindFirstChild("Humanoid") then return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -152,24 +159,36 @@ local NiggaHighlights = {}
                         BoxEsp.Size = Vector2.new(500/RootPos.Z,HeadPos.Y-LegPos.Y) --// math , math and math! credits to 0x83
                         BoxEsp.Position = Vector2.new(RootPos.X-BoxEsp.Size.X/2,RootPos.Y-BoxEsp.Size.Y/2)
                         BoxEsp.Visible = true
+                        Text.Text = Plr.Name .. tostring(Plr.Character:FindFirstChild("Humanoid").Health).. "/"..Plr.Character:FindFirstChild("Humanoid").MaxHealth
                         Text.Position = Vector2.new(HeadPos.X,RootPos.Y-20) --// note to self: vector2 is measured in PIXELS, adding 0.5 pixels won't change much
                                                                             --// UPDATE TO NOTE: why the fuck do i have to subtract to increase y?
                         Text.Visible = true                                 --// reference for later: vectorToWorldSpace(self._cameraCFrame, vector3New(...)),
+                        if Plr.Character:FindFirstChildWhichIsA("RayValue") then
+                            --// something equipped
+                            TextWeapon.Text = "[".. Plr.Character:FindFirstChildWhichIsA("RayValue").Name .. "]"
+                            TextWeapon.Visible = true
+                            TextWeapon.Position = Vector2.new(HeadPos.X,RootPos.Y+20)
+                        else
+                            if TextWeapon.Visible then
+                                TextWeapon.Visible = false
+                            end
+                        end
                     else
 
                         BoxEsp.Visible = false
                         Text.Visible = false
-
+                        TextWeapon.Visible = false
                     end
                 else
                     Text.Visible = false
                     BoxEsp.Visible = false
+                    TextWeapon.Visible = false
                 end
             else
 
                 Text.Visible = false
                 BoxEsp.Visible = false
-
+                TextWeapon.Visible = false
             end
         end)
 
@@ -766,7 +785,8 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     ['Dev'] = Window:AddTab("Experimental"), 
-    ['ESP'] = Window:AddTab("ESP [W.I.P]"), 
+    ['ESP'] = Window:AddTab("ESP"), 
+    ['SPOOF'] = Window:AddTab("Spoofer"),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
@@ -778,6 +798,7 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
+local UISpoofBox = Tabs.SPOOF:AddLeftGroupbox('UI')
 local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
@@ -952,6 +973,27 @@ SMMODE:OnChanged(function()
 
 
 end)
+
+--// procedural attribute changer
+for i, Attribute in pairs(game:GetService("Players").LocalPlayer.PlayerGui:GetAttributes()) do
+    if typeof(Attribute) ~= "boolean" then
+        local NewButton = UISpoofBox:AddInput(tostring(i), {
+            Default = Attribute,
+            Numeric = true,
+            Finished = true,
+        
+            Text = tostring(i),
+            Tooltip = '',
+        
+            Placeholder = '',
+        })
+        NewButton:OnChanged(function()
+            game.Players.LocalPlayer.PlayerGui:SetAttribute(i,tonumber(NewButton.Value))
+        end)
+    end
+end
+
+
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
 end)
