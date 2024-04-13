@@ -159,7 +159,16 @@ local NiggaHighlights = {}
                         BoxEsp.Size = Vector2.new(500/RootPos.Z,HeadPos.Y-LegPos.Y) --// math , math and math! credits to 0x83
                         BoxEsp.Position = Vector2.new(RootPos.X-BoxEsp.Size.X/2,RootPos.Y-BoxEsp.Size.Y/2)
                         BoxEsp.Visible = true
-                        Text.Text = Plr.Name .. " | " .. tostring(Plr.Character:FindFirstChild("Humanoid").Health).. "/"..Plr.Character:FindFirstChild("Humanoid").MaxHealth
+                        local Health = Plr.Character:FindFirstChild("Humanoid").Health
+                        local MaxHealth = Plr.Character:FindFirstChild("Humanoid").MaxHealth
+
+                        Health = tostring(Health)
+
+                        if string.match(Health,".") then
+                            Health = string.split(Health,".")[1]
+                        end
+
+                        Text.Text = Plr.Name .. " | " .. tostring(Health).. "/".. tostring(MaxHealth)
                         Text.Position = Vector2.new(HeadPos.X,RootPos.Y-20) --// note to self: vector2 is measured in PIXELS, adding 0.5 pixels won't change much
                                                                             --// UPDATE TO NOTE: why the fuck do i have to subtract to increase y?
                         Text.Visible = true                                 --// reference for later: vectorToWorldSpace(self._cameraCFrame, vector3New(...)),
