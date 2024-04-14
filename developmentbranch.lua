@@ -835,7 +835,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Blackout GUI [Private] | ' .. Players.LocalPlayer.UserId,
+    Title = 'Revived Hub [Private] | ' .. Players.LocalPlayer.UserId,
     Center = true, 
     AutoShow = true,
 })
