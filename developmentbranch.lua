@@ -350,6 +350,21 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                     Parts.Material = Material
                 end
             end
+            if Child:FindFirstChild("Attachments") then
+                for i, Parts in pairs(Child:FindFirstChild("Attachments"):GetChildren()) do
+                    if Parts:IsA("Folder") then
+                        for i, Folder in pairs(Parts:GetChildren()) do
+                            for i, Children in pairs(Folder:GetChildren()) do
+                                if Children:FindFirstChild("SurfaceAppearance") then
+                                    Children:FindFirstChild("SurfaceAppearance"):Destroy()
+                                end
+                                Children.Transparency = getgenv().VMTRANS
+                                Children.Material = Material
+                            end
+                        end
+                    end
+                end
+            end
         end
         if getgenv().NOSPR or getgenv().NOREC then applyNoRecoil() end
     end
