@@ -433,7 +433,7 @@ local function keycardcheckInstance(Instance)
 end
 
 workspace.Debris.Loot.ChildAdded:Connect(function(Child)
-    if Child.Name == "DeathBag" then
+    if Child.Name == "DeathBag" or Child.Name == "DuffelBag" then
         coroutine.wrap(function()
             repeat task.wait() until Child:FindFirstChild("LootTable")
             if (#Child.LootTable:GetChildren()) > 0 then
