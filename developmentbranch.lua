@@ -13,6 +13,7 @@ if not Player.Character then return end
 
 if getgenv().aliveloaded then return end
 getgenv().aliveloaded = true
+local loadtick = tick()
 
 
 --//envs
@@ -38,6 +39,8 @@ getgenv().NOREC = false
 getgenv().PESP = false
 getgenv().BESP = false
 getgenv().MESP = false
+getgenv().PTAG = nil
+getgenv().PESPTOG = false
 local function encodeNumber(number)
     local alphabet = {
         [0] = "z", [1] = "a", [2] = "b", [3] = "c", [4] = "d", [5] = "e",
@@ -145,7 +148,9 @@ local NiggaHighlights = {}
         local RunServiceConnection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
         
             if Plr.Character then
-                if not Plr.Character:FindFirstChild("Humanoid") then return end
+                if not Plr.Character:FindFirstChild("Humanoid") then BoxEsp.Visible = false return end
+                if not Plr.Character:WaitForChild("Head") then BoxEsp.Visible = false return end
+                if not Plr.Character:WaitForChild("HumanoidRootPart") then BoxEsp.Visible = false return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -721,9 +726,23 @@ end)
 
 --// function for auras
 
+local HeartbeatDebounce
+
 getgenv().Heartbeat = RunService.Heartbeat:Connect(function()
-    --// cleaner func   
-    
+    --// cleaner func    because the one below is so ASS
+    if getgenv().PESPTOG and not HeartbeatDebounce then
+        if not getgenv().PTAG then return end
+        if not getgenv().PTAG.Character then return end
+        HeartbeatDebounce = true
+        local CharacterPosition = getgenv().PTAG.Character:GetPivot().Position
+        local args = {
+            [1] = CharacterPosition
+        }
+        
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Party"):WaitForChild("Ping"):FireServer(unpack(args)) 
+        task.wait(1)
+        HeartbeatDebounce = false       
+    end
 end)
 
 getgenv().RSConnection = RunService.RenderStepped:Connect(function(dt)
@@ -782,7 +801,6 @@ local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 getgenv().linolib = Library
 Library:Notify("Loading...")
-local loadtick = tick()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
@@ -807,7 +825,7 @@ local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX,GPEBOX,GPETOG
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -854,7 +872,7 @@ AutoBox:AddButton('Broker quick start', function()
         game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Stations"):WaitForChild("StartTask"):FireServer(unpack(args))
     end
 end)
-AUBOX = AutoBox:AddInput('VMBOX', {
+AUBOX = AutoBox:AddInput('BBBOX', {
     Default = 'StealCargo',
     Numeric = false,
     Finished = true,
@@ -863,6 +881,26 @@ AUBOX = AutoBox:AddInput('VMBOX', {
     Tooltip = '',
 
     Placeholder = '',
+})
+GPETOG = ESPBox:AddToggle('GPETOGGLE', {
+    Text = 'Global player ESP',
+    Default = false,
+    Tooltip = 'Global player esp',
+})
+GPEBOX = ESPBox:AddInput('PlayerToGlobalESP', {
+    Default = Player.Name,
+    Numeric = false,
+    Finished = true,
+
+    Text = 'Global player ESP [works through party]',
+    Tooltip = 'Global player ESP [works through party]',
+
+    Placeholder = '',
+})
+PLAYERESP = ESPBox:AddToggle('PESP', {
+    Text = 'Player-ESP',
+    Default = false,
+    Tooltip = 'Player ESP',
 })
 ESPBUTTON = ESPBox:AddToggle('BrokESP', {
     Text = 'Broker-ESP',
@@ -873,11 +911,6 @@ MERCESP = ESPBox:AddToggle('CockESP', {
     Text = 'Merchant-ESP',
     Default = false,
     Tooltip = 'Merchant ESP',
-})
-PLAYERESP = ESPBox:AddToggle('PESP', {
-    Text = 'Player-ESP',
-    Default = false,
-    Tooltip = 'Player ESP',
 })
 TXTBOX:OnChanged(function()
     getgenv().VMMAT = TXTBOX.Value
@@ -1039,6 +1072,13 @@ AF:OnChanged(function()
 end)
 AFM:OnChanged(function()
     getgenv().AutofarmMedic = AFM.Value
+end)
+GPETOG:OnChanged(function()
+    getgenv().PESPTOG = GPETOG.Value
+end)
+GPEBOX:OnChanged(function()
+    if not game.Players[GPEBOX.Value] then return end
+    getgenv().PTAG = game.Players[GPEBOX.Value]
 end)
 ESPBUTTON:OnChanged(function()
     getgenv().BESP = ESPBUTTON.Value
