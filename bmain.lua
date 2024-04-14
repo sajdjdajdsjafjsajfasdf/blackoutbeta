@@ -41,6 +41,25 @@ getgenv().BESP = false
 getgenv().MESP = false
 getgenv().PTAG = nil
 getgenv().PESPTOG = false
+getgenv().BulletProperties = {
+    ["Brightness"] = 3;
+    ["LightEmission"] = 1;
+    ["LightInfluence"] = 0;
+    ["Texture"] = "rbxassetid://8923063235";
+    ["TextureLength"] = 1;
+    ["TextureMode"]  = Enum.TextureMode.Stretch;
+    ["TextureSpeed"] = 0;
+    ["Color"] = workspace.Debris.Guns.Default.Beam.Color;
+    ["Transparency"] = workspace.Debris.Guns.Default.Beam.Transparency;
+    ["ZOffset"] = 0;
+    ["CurveSize0"] = 0;
+    ["CurveSize1"] = 0;
+    ["FaceCamera"] = true;
+    ["Segments"] = 1;
+    ["Width0"] = 0.75;
+    ["Width1"] = 0.75
+    
+}
 local function encodeNumber(number)
     local alphabet = {
         [0] = "z", [1] = "a", [2] = "b", [3] = "c", [4] = "d", [5] = "e",
@@ -331,6 +350,21 @@ workspace.CurrentCamera.ChildAdded:Connect(function(Child)
                     Parts.Material = Material
                 end
             end
+            if Child:FindFirstChild("Attachments") then
+                for i, Parts in pairs(Child:FindFirstChild("Attachments"):GetChildren()) do
+                    if Parts:IsA("Folder") then
+                        for i, Folder in pairs(Parts:GetChildren()) do
+                            for i, Children in pairs(Folder:GetChildren()) do
+                                if Children:FindFirstChild("SurfaceAppearance") then
+                                    Children:FindFirstChild("SurfaceAppearance"):Destroy()
+                                end
+                                Children.Transparency = getgenv().VMTRANS
+                                Children.Material = Material
+                            end
+                        end
+                    end
+                end
+            end
         end
         if getgenv().NOSPR or getgenv().NOREC then applyNoRecoil() end
     end
@@ -399,7 +433,7 @@ local function keycardcheckInstance(Instance)
 end
 
 workspace.Debris.Loot.ChildAdded:Connect(function(Child)
-    if Child.Name == "DeathBag" then
+    if Child.Name == "DeathBag" or Child.Name == "DuffelBag" then
         coroutine.wrap(function()
             repeat task.wait() until Child:FindFirstChild("LootTable")
             if (#Child.LootTable:GetChildren()) > 0 then
@@ -447,21 +481,17 @@ local function getnearestplayer()
     if not Character then return end
     local MaxDistance = 250
     for i,v in pairs(Characters:GetChildren()) do
-        print(v.Name)
         if v == Character then continue end
         pcall(function()
             if not v.PrimaryPart or not Character.PrimaryPart then return end
             if Magnitude(v.PrimaryPart,Character.PrimaryPart) < MaxDistance then
-                print("h")
                 CoreGui:SetCore("SendNotification", {
 	            Title = getnearestdb[v].Name;
                 Text =  " is nearby";
 	            Duration = 3;})
                 getnearestdb[v] = v
             else
-                print("h3")
                 if getnearestdb[v] then
-                    print("h2")
                     CoreGui:SetCore("SendNotification", {
 	                Title = getnearestdb[v].Name;
                     Text =  " is no longer nearby";
@@ -805,7 +835,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Blackout GUI [Private] | ' .. Players.LocalPlayer.UserId,
+    Title = 'Revived Hub [Private] | ' .. Players.LocalPlayer.UserId,
     Center = true, 
     AutoShow = true,
 })
@@ -822,6 +852,7 @@ local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local AutoBox = Tabs.Dev:AddLeftGroupbox('Automation')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
+local BulletSpoofer = Tabs.SPOOF:AddRightGroupbox('Bullet tracers');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
@@ -976,6 +1007,19 @@ AFM = AFarmBox:AddToggle('AUTOMEDIC', {
 
 --//UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
 UniversalBox:AddButton('IY', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
+BulletSpoofer:AddButton('Apply effects.', function()
+
+    for i, Bullet in pairs(workspace.Debris.Guns:GetChildren()) do
+        if Bullet.Name == "Default" then
+
+
+            for i, BulletProperty in pairs(getgenv().BulletProperties) do
+                Bullet:FindFirstChild("Beam")[i] = BulletProperty
+            end
+        end
+    end
+
+end)
 
 TeleportsBox:AddButton('Teleport to closest broker', 
 function() 
@@ -1036,6 +1080,46 @@ for _,Directory in pairs(Directories) do
     end
     
 end
+
+--// procedural bullet mods
+for i, Property in pairs(getgenv().BulletProperties) do 
+    if typeof(Property) == "boolean" then
+        local Toggle = BulletSpoofer:AddToggle(i,{
+            Text = i,
+            Default = Property,
+            ToolTip = i,
+        })
+        Toggle:OnChanged(function()
+            getgenv().BulletProperties[i] = Toggle.Value
+        end)
+
+    elseif typeof(Property) == "number" then
+        local Toggle = BulletSpoofer:AddInput(i,{
+            Default = tostring(Property),
+            Numeric = true;
+            Finished = true;
+            Text = i,
+            ToolTip = i,
+            Placeholder = '',
+        })
+        Toggle:OnChanged(function()
+            getgenv().BulletProperties[i] = Toggle.Value
+        end)
+    elseif typeof(Property) == "string" then -- Added missing "then" here
+        local Toggle = BulletSpoofer:AddInput(i,{
+            Default = tostring(Property),
+            Numeric = false;
+            Finished = true;
+            Text = i,
+            ToolTip = i,
+            Placeholder = '',
+        })
+        Toggle:OnChanged(function()
+            getgenv().BulletProperties[i] = Toggle.Value
+        end)
+    end
+end
+
 
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
