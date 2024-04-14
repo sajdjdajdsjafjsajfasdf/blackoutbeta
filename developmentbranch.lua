@@ -168,8 +168,8 @@ local NiggaHighlights = {}
         
             if Plr.Character then
                 if not Plr.Character:FindFirstChild("Humanoid") then BoxEsp.Visible = false return end
-                if not Plr.Character:WaitForChild("Head") then BoxEsp.Visible = false return end
-                if not Plr.Character:WaitForChild("HumanoidRootPart") then BoxEsp.Visible = false return end
+                if not Plr.Character:FindFirstChild("Head") then BoxEsp.Visible = false return end
+                if not Plr.Character:FindFirstChild("HumanoidRootPart") then BoxEsp.Visible = false return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -460,7 +460,7 @@ local function checkPlayer(Player)
 		soundy:Play()
         game:GetService("Debris"):AddItem(soundy, soundy.TimeLength*2)
         if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.PlayerStatus.Status.Combat.Visible then return end
-       game.Players.LocalPlayer:Kick(Player.Name) 
+        game.Players.LocalPlayer:Kick(Player.Name) 
     end 
 end
 
