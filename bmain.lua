@@ -458,7 +458,7 @@ local function checkPlayer(Player)
 		soundy.Volume = 5
 		soundy.Playing = true
 		soundy:Play()
-        game:GetService("Debris"):AddItem(soundy*2)
+        game:GetService("Debris"):AddItem(soundy, soundy.TimeLength*2)
         if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.PlayerStatus.Status.Combat.Visible then return end
        game.Players.LocalPlayer:Kick(Player.Name) 
     end 
