@@ -49,7 +49,11 @@ getgenv().BulletProperties = {
     ["TextureLength"] = 1;
     ["TextureMode"]  = Enum.TextureMode.Stretch;
     ["TextureSpeed"] = 0;
-    ["Color"] = workspace.Debris.Guns.Default.Beam.Color;
+    ["Color"] = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(0, 1, 0)),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0, 1))
+    }); --// workspace.Debris.Guns.Default.Beam.Color;
     ["Transparency"] = workspace.Debris.Guns.Default.Beam.Transparency;
     ["ZOffset"] = 0;
     ["CurveSize0"] = 0;
@@ -168,8 +172,8 @@ local NiggaHighlights = {}
         
             if Plr.Character then
                 if not Plr.Character:FindFirstChild("Humanoid") then BoxEsp.Visible = false return end
-                if not Plr.Character:WaitForChild("Head") then BoxEsp.Visible = false return end
-                if not Plr.Character:WaitForChild("HumanoidRootPart") then BoxEsp.Visible = false return end
+                if not Plr.Character:FindFirstChild("Head") then BoxEsp.Visible = false return end
+                if not Plr.Character:FindFirstChild("HumanoidRootPart") then BoxEsp.Visible = false return end
                 if getgenv().ESPEnabled then
                     local Vector,IsOnScreen = Camera:WorldToViewportPoint(Plr.Character:GetPivot().Position)
                     local Root = Plr.Character:WaitForChild("HumanoidRootPart")
@@ -197,8 +201,21 @@ local NiggaHighlights = {}
                                                                             --// UPDATE TO NOTE: why the fuck do i have to subtract to increase y?
                         Text.Visible = true                                 --// reference for later: vectorToWorldSpace(self._cameraCFrame, vector3New(...)),
                         if Plr.Character:FindFirstChildWhichIsA("RayValue") then
+                            local Magazine,Max = nil,nil
                             --// something equipped
-                            TextWeapon.Text = "[".. Plr.Character:FindFirstChildWhichIsA("RayValue").Name .. "]"
+                            local RayValue = Plr.Character:FindFirstChildWhichIsA("RayValue")
+                            if RayValue:FindFirstChild("GunStatus") then
+                                Magazine = RayValue:FindFirstChild("GunStatus"):GetAttribute("Magazine")
+                                Max = RayValue:FindFirstChild("GunStatus"):GetAttribute("MagazineCapacity")
+                            end
+
+
+                            if Magazine and Max then
+                                print("text should possess it")
+                                TextWeapon.Text = RayValue.Name .. "[" .. tostring(Magazine) .. "/" .. tostring(Max) .. "]"
+                            else
+                                TextWeapon.Text = RayValue.Name
+                            end
                             TextWeapon.Visible = true
                             TextWeapon.Position = Vector2.new(HeadPos.X,RootPos.Y+20)
                         else
@@ -248,7 +265,7 @@ local LBUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui.Righ
 local PlayerList = LBUI.PlayerList
 
 local PlayerListConnections = {}
-
+--[[
 local adjectives = {"blazing","radiant","fading","vivid","silent","lunar"}
 local nouns = {"hawk","marauder","tempest","veil","valley","lighthouse"}
 
@@ -272,7 +289,7 @@ local function spoofServerInfo(bool)
         game:GetService("ReplicatedStorage"):SetAttribute("ServerName",originalServerInfo["SN"])
     end
 end
-
+]]
 
 local function spoofLevel()
     local LevelLabel = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.LevelBox.LevelText
@@ -460,7 +477,7 @@ local function checkPlayer(Player)
 		soundy:Play()
         game:GetService("Debris"):AddItem(soundy, soundy.TimeLength*2)
         if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.PlayerStatus.Status.Combat.Visible then return end
-       game.Players.LocalPlayer:Kick(Player.Name) 
+        game.Players.LocalPlayer:Kick(Player.Name) 
     end 
 end
 
