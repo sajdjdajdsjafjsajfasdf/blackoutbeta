@@ -15,6 +15,7 @@ if getgenv().aliveloaded then return end
 getgenv().aliveloaded = true
 local loadtick = tick()
 
+local audioTable = {"17174178755","17174179860","17174181687","17174183278","17174184602","17174187473"}
 
 --//envs
 
@@ -49,7 +50,11 @@ getgenv().BulletProperties = {
     ["TextureLength"] = 1;
     ["TextureMode"]  = Enum.TextureMode.Stretch;
     ["TextureSpeed"] = 0;
-    ["Color"] = workspace.Debris.Guns.Default.Beam.Color;
+    ["Color"] = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(1, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(0, 1, 0)),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0, 1))
+    }); --// workspace.Debris.Guns.Default.Beam.Color;
     ["Transparency"] = workspace.Debris.Guns.Default.Beam.Transparency;
     ["ZOffset"] = 0;
     ["CurveSize0"] = 0;
@@ -112,6 +117,7 @@ local FlashConnection
 local BrokerHighlights = {}
 local MerchantHighlights = {}
 local NiggaHighlights = {}
+local Prompt_Data = {} --// we store connections for the prompttriggered events here
     local ESP_Data = {} --[[
     format:
 
@@ -197,8 +203,20 @@ local NiggaHighlights = {}
                                                                             --// UPDATE TO NOTE: why the fuck do i have to subtract to increase y?
                         Text.Visible = true                                 --// reference for later: vectorToWorldSpace(self._cameraCFrame, vector3New(...)),
                         if Plr.Character:FindFirstChildWhichIsA("RayValue") then
+                            local Magazine,Max = nil,nil
                             --// something equipped
-                            TextWeapon.Text = "[".. Plr.Character:FindFirstChildWhichIsA("RayValue").Name .. "]"
+                            local RayValue = Plr.Character:FindFirstChildWhichIsA("RayValue")
+                            if RayValue:FindFirstChild("GunStatus") then
+                                Magazine = RayValue:FindFirstChild("GunStatus"):GetAttribute("Magazine")
+                                Max = RayValue:FindFirstChild("GunStatus"):GetAttribute("MagazineCapacity")
+                            end
+
+
+                            if Magazine and Max then
+                                TextWeapon.Text = RayValue.Name .. "[" .. tostring(Magazine) .. "/" .. tostring(Max) .. "]"
+                            else
+                                TextWeapon.Text = RayValue.Name
+                            end
                             TextWeapon.Visible = true
                             TextWeapon.Position = Vector2.new(HeadPos.X,RootPos.Y+20)
                         else
@@ -242,13 +260,22 @@ end)
 for i, connection in pairs(getconnections(game.ReplicatedStorage:WaitForChild("Events"):WaitForChild("Player"):WaitForChild("Flashbang").OnClientEvent)) do
     FlashConnection = connection
 end
-
 local StaticUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui
 local LBUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui.RightTab.Leaderboard
 local PlayerList = LBUI.PlayerList
+local function hidePlayerLB()
+    if PlayerList:FindFirstChild(Player.Name) then
+        PlayerList:FindFirstChild(Player.Name).Parent = StaticUI:FindFirstChild("StaticCore")
+    end
+end
+local function unHidePlayerLB()
+    if StaticUI:FindFirstChild("StaticCore"):FindFirstChild(Player.Name) then
+        StaticUI:FindFirstChild("StaticCore"):FindFirstChild(Player.Name).Parent = PlayerList
+    end
+end
 
 local PlayerListConnections = {}
-
+--[[
 local adjectives = {"blazing","radiant","fading","vivid","silent","lunar"}
 local nouns = {"hawk","marauder","tempest","veil","valley","lighthouse"}
 
@@ -272,7 +299,7 @@ local function spoofServerInfo(bool)
         game:GetService("ReplicatedStorage"):SetAttribute("ServerName",originalServerInfo["SN"])
     end
 end
-
+]]
 
 local function spoofLevel()
     local LevelLabel = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.LevelFrame.Level.LevelBox.LevelText
@@ -301,12 +328,29 @@ local function spoofLevel()
 end
 
 
-
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
-        if Prompt.HoldDuration ~= 0 then
-	    Prompt:SetAttribute("Original",Prompt.HoldDuration)
-            Prompt.HoldDuration = 0
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
+        if getgenv().IP then
+            if Prompt.HoldDuration ~= 0 then
+            Prompt:SetAttribute("Original",Prompt.HoldDuration)
+                Prompt.HoldDuration = 0
+            end
+        end
+        if Prompt.Parent.Name == "LootBase" and Prompt.Name == "OpenLootTable" then
+            
+            --[[if Prompt_Data[Prompt] then
+                Prompt_Data[Prompt]:Disconnect()
+                Prompt_Data[Prompt] = nil
+            end
+            Prompt_Data[Prompt] = Prompt.Triggered:Connect(function()
+                if getgenv().AutoLockpick then
+                    local args = {
+                        [1] = Prompt.Parent.Parent
+                        [2] = true
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Loot"):WaitForChild("MinigameResult"):FireServer(unpack(args))
+                end
+            end)]]
         end
     end
 end)
@@ -835,7 +879,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Revived Hub [Private] | ' .. Players.LocalPlayer.UserId,
+    Title = 'Revived Hub [Private]',
     Center = true, 
     AutoShow = true,
 })
@@ -844,6 +888,7 @@ local Tabs = {
     ['Dev'] = Window:AddTab("Experimental"), 
     ['ESP'] = Window:AddTab("ESP"), 
     ['SPOOF'] = Window:AddTab("Spoofer"),
+    ['STREAM'] = Window:AddTab("Streamer"),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
@@ -856,7 +901,8 @@ local BulletSpoofer = Tabs.SPOOF:AddRightGroupbox('Bullet tracers');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX,GPEBOX,GPETOG
+local SpoofBox = Tabs.STREAM:AddLeftGroupbox("Spoofers [STREAMER ONES]")
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX,GPEBOX,GPETOG,SPB
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -1004,6 +1050,12 @@ AFM = AFarmBox:AddToggle('AUTOMEDIC', {
     Default = false,
     Tooltip = 'Automatically farms broker quests.',
 })
+SPB = SpoofBox:AddToggle('HIDEPLAYEER', {
+    Text = 'Hide player on leaderboard',
+    Default = false,
+    Tooltip = 'Hides local players ui button.',
+})
+
 
 --//UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
 UniversalBox:AddButton('IY', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
@@ -1054,7 +1106,7 @@ for _,Directory in pairs(Directories) do
                 Numeric = true,
                 Finished = true,
             
-                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Text = tostring(i),
                 Tooltip = '',
             
                 Placeholder = '',
@@ -1068,7 +1120,7 @@ for _,Directory in pairs(Directories) do
                 Numeric = false,
                 Finished = true,
             
-                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Text = tostring(i),
                 Tooltip = '',
             
                 Placeholder = '',
@@ -1120,7 +1172,13 @@ for i, Property in pairs(getgenv().BulletProperties) do
     end
 end
 
-
+SPB:OnChanged(function()
+    if SPB.Value == true then
+        hidePlayerLB()
+    else
+        unHidePlayerLB()
+    end
+end)
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
 end)
@@ -1210,5 +1268,11 @@ ThemeManager:SetFolder('MyScriptHub')
 SaveManager:SetFolder('MyScriptHub/specific-game')
 SaveManager:BuildConfigSection(Tabs['UI Settings']) 
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
-
+local soundy = Instance.new("Sound", game:GetService("CoreGui"))
+soundy.SoundId = "rbxassetid://" .. tostring(audioTable[math.random(1,#audioTable)])
+soundy.PlaybackSpeed = 1
+soundy.Volume = 5
+soundy.Playing = true
+soundy:Play()
+game:GetService("Debris"):AddItem(soundy, soundy.TimeLength*2)
 Library:Notify("Loaded! Took: " .. tostring(tick()-loadtick))
