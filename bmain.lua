@@ -5,7 +5,11 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("StarterGui")
 local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid",10)
+local RootPart = Character:WaitForChild("HumanoidRootPart",10)
 local Camera = workspace.CurrentCamera
+local ContextActionService, HttpService = game:GetService('ContextActionService'),game:GetService('HttpService')
 
 if not Player.Character then return end
 
@@ -15,8 +19,15 @@ if getgenv().aliveloaded then return end
 getgenv().aliveloaded = true
 local loadtick = tick()
 
-
+local audioTable = {"17174178755","17174179860","17174181687","17174183278","17174184602","17174187473"}
+local BlacklistedNames = {"Head"}
 --//envs
+
+Player.CharacterAdded:Connect(function(n)
+    Character = n
+    Humanoid = Character:WaitForChild("Humanoid",10)
+    RootPart = Character:WaitForChild("HumanoidRootPart",10)
+end)
 
 getgenv().MeleeAura = false
 getgenv().GunAura = false
@@ -41,6 +52,11 @@ getgenv().BESP = false
 getgenv().MESP = false
 getgenv().PTAG = nil
 getgenv().PESPTOG = false
+getgenv().FLYTOG = false
+getgenv().FLYSPEED = 100
+getgenv().SPEED = 100
+getgenv().NOCLIPTOG = false
+getgenv().SPEEDTOG = false
 getgenv().BulletProperties = {
     ["Brightness"] = 3;
     ["LightEmission"] = 1;
@@ -116,6 +132,7 @@ local FlashConnection
 local BrokerHighlights = {}
 local MerchantHighlights = {}
 local NiggaHighlights = {}
+local Prompt_Data = {} --// we store connections for the prompttriggered events here
     local ESP_Data = {} --[[
     format:
 
@@ -211,7 +228,6 @@ local NiggaHighlights = {}
 
 
                             if Magazine and Max then
-                                print("text should possess it")
                                 TextWeapon.Text = RayValue.Name .. "[" .. tostring(Magazine) .. "/" .. tostring(Max) .. "]"
                             else
                                 TextWeapon.Text = RayValue.Name
@@ -259,10 +275,19 @@ end)
 for i, connection in pairs(getconnections(game.ReplicatedStorage:WaitForChild("Events"):WaitForChild("Player"):WaitForChild("Flashbang").OnClientEvent)) do
     FlashConnection = connection
 end
-
 local StaticUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui
 local LBUI = game:GetService("Players").LocalPlayer.PlayerGui.MainStaticGui.RightTab.Leaderboard
 local PlayerList = LBUI.PlayerList
+local function hidePlayerLB()
+    if PlayerList:FindFirstChild(Player.Name) then
+        PlayerList:FindFirstChild(Player.Name).Parent = StaticUI:FindFirstChild("StaticCore")
+    end
+end
+local function unHidePlayerLB()
+    if StaticUI:FindFirstChild("StaticCore"):FindFirstChild(Player.Name) then
+        StaticUI:FindFirstChild("StaticCore"):FindFirstChild(Player.Name).Parent = PlayerList
+    end
+end
 
 local PlayerListConnections = {}
 --[[
@@ -318,12 +343,29 @@ local function spoofLevel()
 end
 
 
-
 game:GetService("ProximityPromptService").PromptShown:Connect(function(Prompt)
-    if Prompt.Style == Enum.ProximityPromptStyle.Custom and getgenv().IP then
-        if Prompt.HoldDuration ~= 0 then
-	    Prompt:SetAttribute("Original",Prompt.HoldDuration)
-            Prompt.HoldDuration = 0
+    if Prompt.Style == Enum.ProximityPromptStyle.Custom then
+        if getgenv().IP then
+            if Prompt.HoldDuration ~= 0 then
+            Prompt:SetAttribute("Original",Prompt.HoldDuration)
+                Prompt.HoldDuration = 0
+            end
+        end
+        if Prompt.Parent.Name == "LootBase" and Prompt.Name == "OpenLootTable" then
+            
+            --[[if Prompt_Data[Prompt] then
+                Prompt_Data[Prompt]:Disconnect()
+                Prompt_Data[Prompt] = nil
+            end
+            Prompt_Data[Prompt] = Prompt.Triggered:Connect(function()
+                if getgenv().AutoLockpick then
+                    local args = {
+                        [1] = Prompt.Parent.Parent
+                        [2] = true
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Loot"):WaitForChild("MinigameResult"):FireServer(unpack(args))
+                end
+            end)]]
         end
     end
 end)
@@ -393,6 +435,41 @@ game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(Chi
     end
 end)
 --//misc
+local FlightValues = {
+    forwardValue = 0,
+    backwardValue = 0,
+    leftValue = 0,
+    rightValue = 0
+}
+
+local handleMoveForward = function(actionName, inputState, inputObject)
+    FlightValues.forwardValue = (inputState == Enum.UserInputState.Begin) and -1 or 0
+    return Enum.ContextActionResult.Pass
+end
+
+local handleMoveBackward = function(actionName, inputState, inputObject)
+    FlightValues.backwardValue = (inputState == Enum.UserInputState.Begin) and 1 or 0
+    return Enum.ContextActionResult.Pass
+end
+
+local handleMoveLeft = function(actionName, inputState, inputObject)
+    FlightValues.leftValue = (inputState == Enum.UserInputState.Begin) and -1 or 0
+    return Enum.ContextActionResult.Pass
+end
+
+local handleMoveRight = function(actionName, inputState, inputObject)
+    FlightValues.rightValue = (inputState == Enum.UserInputState.Begin) and 1 or 0
+    return Enum.ContextActionResult.Pass
+end
+
+ContextActionService:BindAction(HttpService:GenerateGUID(false), handleMoveForward, false, Enum.KeyCode.W);
+ContextActionService:BindAction(HttpService:GenerateGUID(false), handleMoveBackward, false, Enum.KeyCode.S);
+ContextActionService:BindAction(HttpService:GenerateGUID(false), handleMoveLeft, false, Enum.KeyCode.A);
+ContextActionService:BindAction(HttpService:GenerateGUID(false), handleMoveRight, false, Enum.KeyCode.D);
+
+local function movementVec()
+    return Vector3.new(FlightValues.leftValue + FlightValues.rightValue, 0, FlightValues.forwardValue + FlightValues.backwardValue)
+end
 
 for _, miscNpc in pairs(workspace.NPCs.Other:GetChildren()) do
     local Highlight = Instance.new("Highlight")
@@ -774,6 +851,7 @@ end)
 --// function for auras
 
 local HeartbeatDebounce
+local SpeedHackBV,FlyHackBV
 
 getgenv().Heartbeat = RunService.Heartbeat:Connect(function()
     --// cleaner func    because the one below is so ASS
@@ -789,6 +867,41 @@ getgenv().Heartbeat = RunService.Heartbeat:Connect(function()
         game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Party"):WaitForChild("Ping"):FireServer(unpack(args)) 
         task.wait(1)
         HeartbeatDebounce = false       
+    end
+    if getgenv().NOCLIPTOG then
+        for _, v in next, Character:GetChildren() do
+            if v:IsA("BasePart") then
+                if not BlacklistedNames[v.Name] then
+                    if (Character:GetAttribute("Downed") and Character:GetAttribute("Downed") == true) then
+                        if v.CanCollide == false then
+                            v.CanCollide = true
+                        end
+                    else
+                        if v.CanCollide == true then
+                            v.CanCollide = false
+                        end
+                    end    
+                end
+            end
+        end;
+    end
+    if getgenv().SPEEDTOG then
+        if not getgenv().FLYTOG then
+            SpeedHackBV = SpeedHackBV or Instance.new('BodyVelocity')
+            if SpeedHackBV then
+                SpeedHackBV.MaxForce = Vector3.new(100000, 0, 100000);
+                SpeedHackBV.Parent = RootPart
+                SpeedHackBV.Velocity = (Humanoid.MoveDirection.Magnitude ~= 0 and Humanoid.MoveDirection or gethiddenproperty(Humanoid, 'WalkDirection')) * getgenv().SPEED
+            end
+        end
+    end
+    if getgenv().FLYTOG then
+        FlyHackBV = FlyHackBV or Instance.new('BodyVelocity');
+        if FlyHackBV then
+            FlyHackBV.MaxForce = Vector3.new(math.huge, math.huge, math.huge);
+            FlyHackBV.Parent = RootPart
+            FlyHackBV.Velocity = Camera.CFrame:VectorToWorldSpace(movementVec()*getgenv().FLYSPEED)
+        end
     end
 end)
 
@@ -852,7 +965,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Revived Hub [Private] | ' .. Players.LocalPlayer.UserId,
+    Title = 'Revived Hub [Private]',
     Center = true, 
     AutoShow = true,
 })
@@ -861,11 +974,13 @@ local Tabs = {
     ['Dev'] = Window:AddTab("Experimental"), 
     ['ESP'] = Window:AddTab("ESP"), 
     ['SPOOF'] = Window:AddTab("Spoofer"),
+    ['STREAM'] = Window:AddTab("Streamer"),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
 local AuraBox = Tabs.Dev:AddLeftGroupbox('NPC-Auras')
 local UniversalBox = Tabs.Dev:AddLeftGroupbox('Universal')
+local CharBox = Tabs.Dev:AddLeftGroupbox('Character')
 local MiscBox = Tabs.Dev:AddLeftGroupbox('Miscellaneous')
 local AutoBox = Tabs.Dev:AddLeftGroupbox('Automation')
 local TeleportsBox = Tabs.Dev:AddRightGroupbox('Teleports');
@@ -873,7 +988,8 @@ local BulletSpoofer = Tabs.SPOOF:AddRightGroupbox('Bullet tracers');
 local VmBox = Tabs.Dev:AddRightGroupbox('Viewmodel');
 local AFarmBox = Tabs.Dev:AddRightGroupbox('Auto-farm');
 local ESPBox = Tabs.ESP:AddLeftGroupbox("ESP")
-local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX,GPEBOX,GPETOG
+local SpoofBox = Tabs.STREAM:AddLeftGroupbox("Spoofers [STREAMER ONES]")
+local MA,GA,AP,AR,AF,IS,NBCD,TXTBOX,VMTGL,VMSLD,PPS,AFM,NORECOI,ESPBUTTON,MERCESP,PLAYERESP,NOSPREAD,NOFLAS,SMMODE,AUBOX,GPEBOX,GPETOG,SPB,SPH,FLH,NCH
 VMTGL = VmBox:AddToggle('VmFX', {
     Text = 'Apply viewmodel effects',
     Default = false,
@@ -889,6 +1005,71 @@ NOSPREAD = VmBox:AddToggle('NOSPREED', {
     Default = false,
     Tooltip = 'What the fuck do you think it does',
 })
+SPH = CharBox:AddToggle('SPEEDHACK', {
+    Text = 'Speedhack',
+    Default = false,
+    Tooltip = 'Speed using body velocity',
+})
+local SPEED = CharBox:AddSlider('SPSLIDER', {
+    Text = 'Speed hack',
+    Default = 100,
+    Min = 0,
+    Max = 200,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+        getgenv().SPEED = Value
+    end
+})
+SPH:OnChanged(function()
+    getgenv().SPEEDTOG = SPH.Value
+    if SPH.Value == false then
+        if SpeedHackBV then SpeedHackBV:Destroy() SpeedHackBV = nil end
+    end
+end)
+
+FLH = CharBox:AddToggle('FLIGHTHACK', {
+    Text = 'Flight',
+    Default = false,
+    Tooltip = 'Flight using body velocity',
+})
+local FLIGHTSLIDER = CharBox:AddSlider('FLYSLIDER', {
+    Text = 'Flight speed',
+    Default = 100,
+    Min = 0,
+    Max = 200,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+        getgenv().FLYSPEED = Value
+    end
+})
+FLH:OnChanged(function()
+    getgenv().FLYTOG = FLH.Value
+    print(FLH.Value)
+    if FLH.Value == false then
+        if FlyHackBV then FlyHackBV:Destroy() FlyHackBV = nil end
+    end
+end)
+
+NCH = CharBox:AddToggle('NOCLIP', {
+    Text = 'Noclip',
+    Default = false,
+    Tooltip = 'Noclip [AUTO TURNS OFF WHEN DOWNED]',
+})
+NCH:OnChanged(function()
+    getgenv().NOCLIPTOG = NCH.Value
+    if NCH.Value == false then
+        if Humanoid then
+            Humanoid:ChangeState('Physics');
+            task.wait();
+            Humanoid:ChangeState('RunningNoPhysics');
+        end
+    end
+end)
+
 VMSLD = VmBox:AddSlider('VMTRANSSLID', {
     Text = 'Viewmodel gun transparency',
     Default = 0,
@@ -1021,6 +1202,12 @@ AFM = AFarmBox:AddToggle('AUTOMEDIC', {
     Default = false,
     Tooltip = 'Automatically farms broker quests.',
 })
+SPB = SpoofBox:AddToggle('HIDEPLAYEER', {
+    Text = 'Hide player on leaderboard',
+    Default = false,
+    Tooltip = 'Hides local players ui button.',
+})
+
 
 --//UniversalBox:AddButton('Unnamed-Esp', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua'))() end)
 UniversalBox:AddButton('IY', function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end)
@@ -1071,7 +1258,7 @@ for _,Directory in pairs(Directories) do
                 Numeric = true,
                 Finished = true,
             
-                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Text = tostring(i),
                 Tooltip = '',
             
                 Placeholder = '',
@@ -1085,7 +1272,7 @@ for _,Directory in pairs(Directories) do
                 Numeric = false,
                 Finished = true,
             
-                Text = tostring(i) .. " : " .. tostring(Attribute),
+                Text = tostring(i),
                 Tooltip = '',
             
                 Placeholder = '',
@@ -1137,7 +1324,13 @@ for i, Property in pairs(getgenv().BulletProperties) do
     end
 end
 
-
+SPB:OnChanged(function()
+    if SPB.Value == true then
+        hidePlayerLB()
+    else
+        unHidePlayerLB()
+    end
+end)
 VMTGL:OnChanged(function()
     getgenv().VmFX = VMTGL.Value
 end)
@@ -1227,5 +1420,11 @@ ThemeManager:SetFolder('MyScriptHub')
 SaveManager:SetFolder('MyScriptHub/specific-game')
 SaveManager:BuildConfigSection(Tabs['UI Settings']) 
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
-
+local soundy = Instance.new("Sound", game:GetService("CoreGui"))
+soundy.SoundId = "rbxassetid://" .. tostring(audioTable[math.random(1,#audioTable)])
+soundy.PlaybackSpeed = 1
+soundy.Volume = 5
+soundy.Playing = true
+soundy:Play()
+game:GetService("Debris"):AddItem(soundy, soundy.TimeLength*2)
 Library:Notify("Loaded! Took: " .. tostring(tick()-loadtick))
